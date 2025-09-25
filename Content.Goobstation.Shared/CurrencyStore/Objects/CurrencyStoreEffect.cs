@@ -1,0 +1,54 @@
+namespace Content.Goobstation.Shared.CurrencyStore.Objects;
+
+/// <summary>
+///     An effect that is executed when a token is activated.
+/// </summary>
+/// <remarks>
+///     <para>
+///     When implementing an effect, first check to make sure that there are no
+///     other effects that already do the same thing as you. If you are making a
+///     complex effect, it may be helpful to break it into multiple effects so that
+///     they can be reused for other purposes.
+///     </para>
+///     <para>
+///     Effects are not reversible, do not attempt to request a user confirm
+///     that they want to use the effect, that is handled exclusively by the store
+///     system. By the time effects are executing, the item is already used, and
+///     can not be returned to the user without admin intervention.
+///     </para>
+/// </remarks>
+[ImplicitDataDefinitionForInheritors]
+public abstract partial class CurrencyStoreEffect
+{
+    /// <summary>
+    ///     The description displayed to the user, can be modified by items if they want to display
+    ///     a different description.
+    /// </summary>
+    [DataField("description")]
+    public abstract LocId LocalizedDescription { get; protected set; }
+
+    /// <summary>
+    ///     Executes the effect.
+    /// </summary>
+    /// <param name="player">The player entity</param>
+    /// <param name="entityManager">EntityManager system</param>
+    public abstract void ExecuteEffect(EntityUid player, IEntityManager entityManager);
+
+    /// <summary>
+    ///     Get the description of the effect that is displayed to the user. Intended for future use.
+    ///     The description should be clear and concise, and should be able to be displayed in a single line.
+    /// </summary>
+    public string GetLocalizedDescription()
+    {
+        return Loc.GetString(LocalizedDescription);
+    }
+
+    /// <summary>
+    ///     Get allowed round states for the effect to be executed. Returns <see cref="CurrencyStoreRoundState.Always">Always</see>
+    ///     if not overridden
+    /// </summary>
+    public CurrencyStoreRoundState GetAllowedRoundStates()
+    {
+        return CurrencyStoreRoundState.Always;
+    }
+}
