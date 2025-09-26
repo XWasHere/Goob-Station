@@ -1,0 +1,5 @@
+- type: currencyStoreCategory
+  id: Debug
+  name: currencystore-category-debug-name
+  description: currencystore-category-debug-description
+  inStore: false

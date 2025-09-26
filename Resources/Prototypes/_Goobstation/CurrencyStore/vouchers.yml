@@ -1,0 +1,6 @@
+- type: currencyStoreVoucher
+  id: Debug
+  name: currencystore-voucher-debug-name
+  description: currencystore-voucher-debug-description
+  categories:
+  - Debug

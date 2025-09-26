@@ -1,0 +1,31 @@
+# test that tokens work at all
+- type: currencyStoreItem
+  id: DebugNoOp
+  name: currencystore-item-noop-name
+  description: currencystore-item-noop-description
+  category: Debug
+  price: 0 # it's free..?
+  effects: []
+
+# test effects work properly
+- type: currencyStoreItem
+  id: DebugGibstick
+  name: currencystore-item-gibstick-name
+  description: currencystore-item-gibstick-description
+  redeemable: inround
+  category: Debug
+  price: 10000
+  priceIncrease: 10000
+  priceDecrease: 1000
+  immediate: true
+  effects: [] # TODO: Add effects...
+
+# test multiple uses work properly
+- type: currencyStoreItem
+  id: DebugHeavy
+  name: currencystore-item-heavy-name
+  description: currencystore-item-heavy-description
+  category: Debug
+  price: 500
+  maxUses: 5
+  effects: []
