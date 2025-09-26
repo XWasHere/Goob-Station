@@ -75,12 +75,12 @@ public sealed partial class CurrencyStoreItemPrototype : IPrototype
     /// <summary>
     ///     Conditions evaluated before activating an item. If any condition fails, the item will not be used.
     /// </summary>
-    [DataField]
+    [DataField(serverOnly: true)]
     public List<CurrencyStoreCondition> Conditions = new();
 
     /// <summary>
     ///     Effects executed after activating an item.
     /// </summary>
-    [DataField(required: true)]
+    [DataField(required: true, serverOnly: true)]
     public List<CurrencyStoreEffect> Effects = new();
 }
