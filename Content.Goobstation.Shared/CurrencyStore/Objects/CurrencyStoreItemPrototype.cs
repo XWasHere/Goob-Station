@@ -13,12 +13,6 @@ public sealed partial class CurrencyStoreItemPrototype : IPrototype
     public string ID { get; private set; } = default!;
 
     /// <summary>
-    ///     When the item can be redeemed.
-    /// </summary>
-    [DataField]
-    public CurrencyStoreRoundState Redeemable { get; private set;  } = CurrencyStoreRoundState.Always;
-
-    /// <summary>
     ///     The name displayed to the user.
     /// </summary>
     [DataField(required: true)]
@@ -35,6 +29,12 @@ public sealed partial class CurrencyStoreItemPrototype : IPrototype
     /// </summary>
     [DataField(required: true)]
     public ProtoId<CurrencyStoreCategoryPrototype> Category { get; private set; }
+
+    /// <summary>
+    ///     When the item can be redeemed.
+    /// </summary>
+    [DataField]
+    public CurrencyStoreRoundState Redeemable { get; private set;  } = CurrencyStoreRoundState.Always;
 
     /// <summary>
     ///     The amount of currency it costs to buy this item.
@@ -70,7 +70,7 @@ public sealed partial class CurrencyStoreItemPrototype : IPrototype
     ///     Tags associated with this item.
     /// </summary>
     [DataField]
-    public List<ProtoId<CurrencyStoreTagPrototype>> Tags = new();
+    public HashSet<ProtoId<CurrencyStoreTagPrototype>> Tags = new();
 
     /// <summary>
     ///     Conditions evaluated before activating an item. If any condition fails, the item will not be used.

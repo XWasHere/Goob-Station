@@ -28,11 +28,11 @@ public sealed partial class CurrencyStoreVoucherPrototype : IPrototype
     ///     Tags that can be purchased with this voucher.
     /// </summary>
     [DataField]
-    public ProtoId<CurrencyStoreTagPrototype> Tags { get; private set; } = new();
+    public HashSet<ProtoId<CurrencyStoreTagPrototype>> Tags { get; private set; } = new();
 
     /// <summary>
     ///     Categories that can be purchased with this voucher.
     /// </summary>
     [DataField]
-    public ProtoId<CurrencyStoreCategoryPrototype> Categories { get; private set; } = new();
+    public HashSet<ProtoId<CurrencyStoreCategoryPrototype>> Categories { get; private set; } = new();
 }
