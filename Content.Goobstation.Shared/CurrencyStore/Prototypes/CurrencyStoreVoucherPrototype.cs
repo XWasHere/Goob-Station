@@ -1,6 +1,6 @@
 using Robust.Shared.Prototypes;
 
-namespace Content.Goobstation.Shared.CurrencyStore.Objects;
+namespace Content.Goobstation.Shared.CurrencyStore.Prototypes;
 
 /// <summary>
 ///     Vouchers allow players to purchase one of any item for free.

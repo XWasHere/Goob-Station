@@ -1,4 +1,4 @@
-namespace Content.Goobstation.Shared.CurrencyStore.Objects;
+namespace Content.Goobstation.Shared.CurrencyStore;
 
 /// <summary>
 ///     An effect that is executed when a token is activated.

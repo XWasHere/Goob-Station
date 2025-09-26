@@ -1,4 +1,4 @@
-namespace Content.Goobstation.Shared.CurrencyStore.Objects;
+namespace Content.Goobstation.Shared.CurrencyStore;
 
 /// <summary>
 ///     When an item or condition can be used

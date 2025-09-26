@@ -1,6 +1,6 @@
 using Robust.Shared.Prototypes;
 
-namespace Content.Goobstation.Shared.CurrencyStore.Objects;
+namespace Content.Goobstation.Shared.CurrencyStore.Prototypes;
 
 /// <summary>
 ///     An item in the game store.

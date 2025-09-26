@@ -1,6 +1,6 @@
 using Robust.Shared.Prototypes;
 
-namespace Content.Goobstation.Shared.CurrencyStore.Objects;
+namespace Content.Goobstation.Shared.CurrencyStore.Prototypes;
 
 /// <summary>
 ///     A tag for a store item, used by vouchers to determine if an item can

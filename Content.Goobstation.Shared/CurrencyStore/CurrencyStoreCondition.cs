@@ -1,4 +1,4 @@
-namespace Content.Goobstation.Shared.CurrencyStore.Objects;
+namespace Content.Goobstation.Shared.CurrencyStore;
 
 /// <summary>
 ///     The base class for all store conditions. Any class that inherits from this can be used
