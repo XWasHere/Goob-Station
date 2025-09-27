@@ -85,6 +85,8 @@ using System.Net;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Content.Goobstation.Shared.CurrencyStore; // Goobstation - Currency Store
+using Content.Goobstation.Shared.CurrencyStore.Prototypes; // Goobstation - Currency Store
 using Content.Server.Administration.Logs;
 using Content.Shared.Administration.Logs;
 using Content.Shared.CCVar;
@@ -444,6 +446,46 @@ namespace Content.Server.Database
 
         Task<List<string>> GetShoutouts();
 
+        #endregion
+
+        #region Goobstation - Currency Store
+        // Goobstation Start
+
+        /// <summary>
+        /// Get the items in a player's inventory.
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        Task<List<InventoryItem>> GetPlayerInventory(NetUserId player);
+
+        /// <summary>
+        /// Get an item from a player's inventory or null if it does not exist
+        /// </summary>
+        /// <param name="item">The database id of the item</param>
+        Task<InventoryItem?> GetPlayerInventoryItem(int item);
+
+        /// <summary>
+        /// Add an item to a player's inventory
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        /// <param name="prototype">The prototype of the item</param>
+        /// <param name="immediate">If the item should immediately activate</param>
+        /// <param name="uses">The number of times the item can be used</param>
+        Task AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses);
+
+        /// <summary>
+        /// Remove an item from a player's inventory
+        /// </summary>
+        /// <param name="id">The database id of the item</param>
+        Task DeletePlayerInventoryItem(int id);
+
+        /// <summary>
+        /// Set the number of uses remaining on an item in a player's inventory
+        /// </summary>
+        /// <param name="id">The database id of the item</param>
+        /// <param name="uses">The new number of uses</param>
+        Task SetPlayerInventoryItemUses(int id, int uses);
+
+        // Goobstation End
         #endregion
 
         #region IPintel
@@ -1253,6 +1295,42 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.GetShoutouts());
         }
 
+        #endregion
+
+        #region Goobstation - Currency Store
+        // Goobstation Start
+
+        public Task<List<InventoryItem>> GetPlayerInventory(NetUserId player)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPlayerInventory(player));
+        }
+
+        public Task<InventoryItem?> GetPlayerInventoryItem(int item)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPlayerInventoryItem(item));
+        }
+
+        public Task AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.AddPlayerInventoryItem(player, prototype, immediate, uses));
+        }
+
+        public Task DeletePlayerInventoryItem(int id)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.DeletePlayerInventoryItem(id));
+        }
+
+        public Task SetPlayerInventoryItemUses(int id, int uses)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.SetPlayerInventoryItemUses(id, uses));
+        }
+
+        // Goobstation End
         #endregion
 
         public Task<bool> UpsertIPIntelCache(DateTime time, IPAddress ip, float score)

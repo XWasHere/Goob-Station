@@ -135,6 +135,8 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Content.Goobstation.Shared.CurrencyStore; // Goobstation - Currency Store
+using Content.Goobstation.Shared.CurrencyStore.Prototypes; // Goobstation - Currency Store
 using Content.Server.Administration.Logs;
 using Content.Server.Administration.Managers;
 using Content.Shared._RMC14.LinkAccount;
@@ -2080,6 +2082,93 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             return ntNames;
         }
 
+        #endregion
+
+        #region Goobstation - Currency Store
+        // Goobstation Start
+
+        public async Task<List<InventoryItem>> GetPlayerInventory(NetUserId player)
+        {
+            await using var db = await GetDb();
+
+            return await db.DbContext.GoobCurrencyStoreInventory
+                .Where(i => i.PlayerUserId == player)
+                .Select(i => MakeInventoryItem(i).Value)
+                .ToListAsync();
+        }
+
+        public async Task<InventoryItem?> GetPlayerInventoryItem(int id)
+        {
+            await using var db = await GetDb();
+
+            var row = await db.DbContext.GoobCurrencyStoreInventory
+                .Where(i => i.Id == id)
+                .SingleOrDefaultAsync();
+
+            return MakeInventoryItem(row);
+        }
+
+        public async Task AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses)
+        {
+            await using var db = await GetDb();
+
+            db.DbContext.GoobCurrencyStoreInventory.Add(new GoobCurrencyStoreInventoryItem()
+            {
+                PlayerUserId = player,
+                Prototype = prototype,
+                Immediate = immediate,
+                UsesLeft = uses,
+            });
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        public async Task DeletePlayerInventoryItem(int id)
+        {
+            await using var db = await GetDb();
+
+            var item = await db.DbContext.GoobCurrencyStoreInventory
+                .Where(i => i.Id == id)
+                .SingleOrDefaultAsync();
+
+            if (item == null)
+                return;
+
+            db.DbContext.GoobCurrencyStoreInventory.Remove(item);
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        public async Task SetPlayerInventoryItemUses(int id, int uses)
+        {
+            await using var db = await GetDb();
+
+            var item = await db.DbContext.GoobCurrencyStoreInventory
+                .Where(i => i.Id == id)
+                .SingleOrDefaultAsync();
+
+            if (item == null)
+                return;
+
+            item.UsesLeft = uses;
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        [return: NotNullIfNotNull(nameof(row))]
+        protected InventoryItem? MakeInventoryItem(GoobCurrencyStoreInventoryItem? row)
+        {
+            if (row == null)
+                return null;
+
+            return new InventoryItem()
+            {
+                Id = row.Id,
+                Owner = new NetUserId(row.PlayerUserId),
+                Prototype = row.Prototype,
+                Immediate = row.Immediate,
+                UsesLeft = row.UsesLeft
+            };
+        }
+
+        // Goobstation End
         #endregion
 
         # region IPIntel

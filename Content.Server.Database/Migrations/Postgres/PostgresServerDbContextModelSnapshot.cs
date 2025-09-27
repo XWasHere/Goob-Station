@@ -634,6 +634,48 @@ namespace Content.Server.Database.Migrations.Postgres
                         });
                 });
 
+            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreInventoryItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("goob_currency_store_inventory_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Immediate")
+                        .HasColumnType("boolean")
+                        .HasColumnName("immediate");
+
+                    b.Property<int?>("PlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("player_id");
+
+                    b.Property<Guid>("PlayerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("player_user_id");
+
+                    b.Property<string>("Prototype")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("prototype");
+
+                    b.Property<int>("UsesLeft")
+                        .HasColumnType("integer")
+                        .HasColumnName("uses_left");
+
+                    b.HasKey("Id")
+                        .HasName("PK_goob_currency_store_inventory");
+
+                    b.HasIndex("PlayerId")
+                        .HasDatabaseName("IX_goob_currency_store_inventory_player_id");
+
+                    b.HasIndex("PlayerUserId")
+                        .HasDatabaseName("IX_goob_currency_store_inventory_player_user_id");
+
+                    b.ToTable("goob_currency_store_inventory", (string)null);
+                });
+
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
                 {
                     b.Property<int>("Id")
@@ -2066,6 +2108,14 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("Server");
                 });
 
+            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreInventoryItem", b =>
+                {
+                    b.HasOne("Content.Server.Database.Player", null)
+                        .WithMany("CurrencyStoreInventory")
+                        .HasForeignKey("PlayerId")
+                        .HasConstraintName("FK_goob_currency_store_inventory_player_player_id");
+                });
+
             modelBuilder.Entity("Content.Server.Database.Job", b =>
                 {
                     b.HasOne("Content.Server.Database.Profile", "Profile")
@@ -2583,6 +2633,8 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("AdminWatchlistsLastEdited");
 
                     b.Navigation("AdminWatchlistsReceived");
+
+                    b.Navigation("CurrencyStoreInventory");
 
                     b.Navigation("JobWhitelists");
 

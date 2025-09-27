@@ -89,3 +89,19 @@ public sealed class PollVote
     [Required]
     public DateTime VotedAt { get; set; }
 }
+
+[Index(nameof(PlayerUserId))]
+public sealed class GoobCurrencyStoreInventoryItem
+{
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    [ForeignKey("Player")]
+    public Guid PlayerUserId { get; set; }
+
+    public string Prototype { get; set; } = null!;
+
+    public bool Immediate { get; set; }
+
+    public int UsesLeft { get; set; }
+}

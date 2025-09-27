@@ -191,7 +191,8 @@ namespace Content.Server.Database
         public DbSet<RMCPatronLobbyMessage> RMCPatronLobbyMessages { get; set; } = default!;
         public DbSet<RMCPatronRoundEndNTShoutout> RMCPatronRoundEndNTShoutouts { get; set; } = default!;
 
-        // Goobstation Polls
+        // Goobstation
+        public DbSet<GoobCurrencyStoreInventoryItem> GoobCurrencyStoreInventory { get; set; } = default!;
         public DbSet<Poll> Polls { get; set; } = default!;
         public DbSet<PollOption> PollOptions { get; set; } = default!;
         public DbSet<PollVote> PollVotes { get; set; } = default!;
@@ -820,6 +821,8 @@ namespace Content.Server.Database
         public List<AdminLogPlayer> AdminLogs { get; set; } = null!;
 
         public int ServerCurrency { get; set; } // Goobstation - Goob coin
+
+        public List<GoobCurrencyStoreInventoryItem> CurrencyStoreInventory { get; set; } = null!; // Goobstation - Currency Store
 
         public TimeSpan? LastRolledAntag { get; set; } // Goobstation
 
