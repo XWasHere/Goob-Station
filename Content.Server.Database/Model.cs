@@ -193,6 +193,7 @@ namespace Content.Server.Database
 
         // Goobstation
         public DbSet<GoobCurrencyStoreInventoryItem> GoobCurrencyStoreInventory { get; set; } = default!;
+        public DbSet<GoobCurrencyStorePermanentItem> GoobCurrencyStorePermanentItems { get; set; } = default!;
         public DbSet<Poll> Polls { get; set; } = default!;
         public DbSet<PollOption> PollOptions { get; set; } = default!;
         public DbSet<PollVote> PollVotes { get; set; } = default!;
@@ -576,7 +577,22 @@ namespace Content.Server.Database
                 .HasPrincipalKey(p => p.Id)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Goobstation Polls
+            // Goobstation
+            modelBuilder.Entity<GoobCurrencyStoreInventoryItem>()
+                .HasOne(i => i.Player)
+                .WithMany(i => i.CurrencyStoreInventory)
+                .HasForeignKey(i => i.PlayerUserId)
+                .HasPrincipalKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GoobCurrencyStorePermanentItem>()
+                .HasOne(i => i.Player)
+                .WithMany(p => p.CurrencyStorePermanentItems)
+                .HasForeignKey(i => i.PlayerUserId)
+                .HasPrincipalKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Goobstation
             modelBuilder.Entity<Poll>()
                 .HasOne(p => p.CreatedBy)
                 .WithMany()
@@ -822,7 +838,9 @@ namespace Content.Server.Database
 
         public int ServerCurrency { get; set; } // Goobstation - Goob coin
 
-        public List<GoobCurrencyStoreInventoryItem> CurrencyStoreInventory { get; set; } = null!; // Goobstation - Currency Store
+        // Goobstation - Currency Store
+        public List<GoobCurrencyStoreInventoryItem> CurrencyStoreInventory = null!;
+        public List<GoobCurrencyStorePermanentItem> CurrencyStorePermanentItems = null!;
 
         public TimeSpan? LastRolledAntag { get; set; } // Goobstation
 

@@ -485,6 +485,33 @@ namespace Content.Server.Database
         /// <param name="uses">The new number of uses</param>
         Task SetPlayerInventoryItemUses(int id, int uses);
 
+        /// <summary>
+        /// Get the permanent items purchased by the player.
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        public Task<List<ProtoId<CurrencyStoreItemPrototype>>> GetPlayerOwnedPermanentItems(NetUserId player);
+
+        /// <summary>
+        /// Check if a user has purchased a permanent item
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        /// <param name="prototype">The prototype id of the item</param>
+        Task<bool> GetPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
+
+        /// <summary>
+        /// Remove a permanent item record from a user
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        /// <param name="prototype">The prototype id of the item</param>
+        Task RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
+
+        /// <summary>
+        /// Add a permanent item record to a user
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        /// <param name="prototype">The prototype id of the item</param>
+        Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
+
         // Goobstation End
         #endregion
 
@@ -1328,6 +1355,30 @@ namespace Content.Server.Database
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.SetPlayerInventoryItemUses(id, uses));
+        }
+
+        public Task<List<ProtoId<CurrencyStoreItemPrototype>>> GetPlayerOwnedPermanentItems(NetUserId player)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPlayerOwnedPermanentItems(player));
+        }
+
+        public Task<bool> GetPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPermanentItemOwnership(player, prototype));
+        }
+
+        public Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.AddPermanentItemOwnership(player, prototype));
+        }
+
+        public Task RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.RemovePermanentItemOwnership(player, prototype));
         }
 
         // Goobstation End

@@ -2168,6 +2168,54 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             };
         }
 
+        public async Task<List<ProtoId<CurrencyStoreItemPrototype>>> GetPlayerOwnedPermanentItems(NetUserId player)
+        {
+            await using var db = await GetDb();
+
+            return await db.DbContext.GoobCurrencyStorePermanentItems
+                .Where(i => i.PlayerUserId == player.UserId)
+                .Select(i => new ProtoId<CurrencyStoreItemPrototype>(i.Prototype))
+                .ToListAsync();
+        }
+
+        public async Task<bool> GetPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        {
+            await using var db = await GetDb();
+
+            return db.DbContext.GoobCurrencyStorePermanentItems
+                .Any(i => i.PlayerUserId == player.UserId && i.Prototype == prototype);
+        }
+
+        public async Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        {
+            await using var db = await GetDb();
+
+            if (await GetPermanentItemOwnership(player, prototype))
+                return;
+
+            db.DbContext.GoobCurrencyStorePermanentItems.Add(new GoobCurrencyStorePermanentItem()
+            {
+                PlayerUserId = player.UserId,
+                Prototype = prototype
+            });
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        public async Task RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        {
+            await using var db = await GetDb();
+
+            var record = await db.DbContext.GoobCurrencyStorePermanentItems
+                .Where(i => i.PlayerUserId == player.UserId && i.Prototype == prototype)
+                .FirstOrDefaultAsync();
+
+            if (record == null)
+                return;
+
+            db.DbContext.Remove(record);
+            await db.DbContext.SaveChangesAsync();
+        }
+
         // Goobstation End
         #endregion
 

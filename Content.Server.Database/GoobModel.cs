@@ -98,10 +98,21 @@ public sealed class GoobCurrencyStoreInventoryItem
 
     [ForeignKey("Player")]
     public Guid PlayerUserId { get; set; }
+    public Player Player { get; set; } = default!;
 
-    public string Prototype { get; set; } = null!;
+    public string Prototype { get; set; } = default!;
 
     public bool Immediate { get; set; }
 
     public int UsesLeft { get; set; }
+}
+
+[PrimaryKey(nameof(PlayerUserId), nameof(Prototype))]
+public sealed class GoobCurrencyStorePermanentItem
+{
+    [ForeignKey("Player")]
+    public Guid PlayerUserId { get; set; }
+    public Player Player { get; set; } = default!;
+
+    public string Prototype { get; set; } = default!;
 }

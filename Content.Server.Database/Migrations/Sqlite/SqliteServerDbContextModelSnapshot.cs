@@ -608,10 +608,6 @@ namespace Content.Server.Database.Migrations.Sqlite
                         .HasColumnType("INTEGER")
                         .HasColumnName("immediate");
 
-                    b.Property<int?>("PlayerId")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("player_id");
-
                     b.Property<Guid>("PlayerUserId")
                         .HasColumnType("TEXT")
                         .HasColumnName("player_user_id");
@@ -628,13 +624,26 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.HasKey("Id")
                         .HasName("PK_goob_currency_store_inventory");
 
-                    b.HasIndex("PlayerId")
-                        .HasDatabaseName("IX_goob_currency_store_inventory_player_id");
-
                     b.HasIndex("PlayerUserId")
                         .HasDatabaseName("IX_goob_currency_store_inventory_player_user_id");
 
                     b.ToTable("goob_currency_store_inventory", (string)null);
+                });
+
+            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStorePermanentItem", b =>
+                {
+                    b.Property<Guid>("PlayerUserId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("player_user_id");
+
+                    b.Property<string>("Prototype")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("prototype");
+
+                    b.HasKey("PlayerUserId", "Prototype")
+                        .HasName("PK_goob_currency_store_permanent_items");
+
+                    b.ToTable("goob_currency_store_permanent_items", (string)null);
                 });
 
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
@@ -2021,10 +2030,28 @@ namespace Content.Server.Database.Migrations.Sqlite
 
             modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreInventoryItem", b =>
                 {
-                    b.HasOne("Content.Server.Database.Player", null)
+                    b.HasOne("Content.Server.Database.Player", "Player")
                         .WithMany("CurrencyStoreInventory")
-                        .HasForeignKey("PlayerId")
-                        .HasConstraintName("FK_goob_currency_store_inventory_player_player_id");
+                        .HasForeignKey("PlayerUserId")
+                        .HasPrincipalKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_goob_currency_store_inventory_player_player_user_id");
+
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStorePermanentItem", b =>
+                {
+                    b.HasOne("Content.Server.Database.Player", "Player")
+                        .WithMany("CurrencyStorePermanentItems")
+                        .HasForeignKey("PlayerUserId")
+                        .HasPrincipalKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_goob_currency_store_permanent_items_player_player_user_id");
+
+                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("Content.Server.Database.Job", b =>
@@ -2546,6 +2573,8 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.Navigation("AdminWatchlistsReceived");
 
                     b.Navigation("CurrencyStoreInventory");
+
+                    b.Navigation("CurrencyStorePermanentItems");
 
                     b.Navigation("JobWhitelists");
 
