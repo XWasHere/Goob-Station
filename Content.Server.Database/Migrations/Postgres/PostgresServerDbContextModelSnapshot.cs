@@ -685,6 +685,33 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.ToTable("goob_currency_store_permanent_items", (string)null);
                 });
 
+            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreVoucher", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("goob_currency_store_vouchers_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("PlayerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("player_user_id");
+
+                    b.Property<string>("Prototype")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("prototype");
+
+                    b.HasKey("Id")
+                        .HasName("PK_goob_currency_store_vouchers");
+
+                    b.HasIndex("PlayerUserId")
+                        .HasDatabaseName("IX_goob_currency_store_vouchers_player_user_id");
+
+                    b.ToTable("goob_currency_store_vouchers", (string)null);
+                });
+
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
                 {
                     b.Property<int>("Id")
@@ -2143,6 +2170,19 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreVoucher", b =>
+                {
+                    b.HasOne("Content.Server.Database.Player", "Player")
+                        .WithMany("CurrencyStoreVouchers")
+                        .HasForeignKey("PlayerUserId")
+                        .HasPrincipalKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_goob_currency_store_vouchers_player_player_user_id");
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("Content.Server.Database.Job", b =>
                 {
                     b.HasOne("Content.Server.Database.Profile", "Profile")
@@ -2664,6 +2704,8 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("CurrencyStoreInventory");
 
                     b.Navigation("CurrencyStorePermanentItems");
+
+                    b.Navigation("CurrencyStoreVouchers");
 
                     b.Navigation("JobWhitelists");
 

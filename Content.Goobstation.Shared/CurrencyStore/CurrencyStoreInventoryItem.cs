@@ -6,8 +6,10 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 
 /// <summary>
 ///     Class representing a single owned item in a player's inventory.
+///
+///     See GoobCurrencyStoreInventoryItem for the in-database structure.
 /// </summary>
-public struct InventoryItem
+public sealed class CurrencyStoreInventoryItem
 {
     /// <summary>
     ///     The database id of this item.

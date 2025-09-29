@@ -455,13 +455,13 @@ namespace Content.Server.Database
         /// Get the items in a player's inventory.
         /// </summary>
         /// <param name="player">The user id of the player</param>
-        Task<List<InventoryItem>> GetPlayerInventory(NetUserId player);
+        Task<List<CurrencyStoreInventoryItem>> GetPlayerInventory(NetUserId player);
 
         /// <summary>
         /// Get an item from a player's inventory or null if it does not exist
         /// </summary>
         /// <param name="item">The database id of the item</param>
-        Task<InventoryItem?> GetPlayerInventoryItem(int item);
+        Task<CurrencyStoreInventoryItem?> GetPlayerInventoryItem(int item);
 
         /// <summary>
         /// Add an item to a player's inventory
@@ -511,6 +511,31 @@ namespace Content.Server.Database
         /// <param name="player">The user id of the player</param>
         /// <param name="prototype">The prototype id of the item</param>
         Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
+
+        /// <summary>
+        /// Get all vouchers owned by a player
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        Task<List<CurrencyStoreVoucher>> GetPlayerOwnedVouchers(NetUserId player);
+
+        /// <summary>
+        /// Get a voucher
+        /// </summary>
+        /// <param name="id">The database id of the voucher</param>
+        Task<CurrencyStoreVoucher?> GetStoreVoucher(int id);
+
+        /// <summary>
+        /// Add a voucher to a player
+        /// </summary>
+        /// <param name="player">The user id of the player</param>
+        /// <param name="prototype">The prototype id of the voucher</param>
+        Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype);
+
+        /// <summary>
+        /// Remove a voucher
+        /// </summary>
+        /// <param name="id">The database id of the voucher</param>
+        Task RemoveStoreVoucher(int id);
 
         // Goobstation End
         #endregion
@@ -1327,13 +1352,13 @@ namespace Content.Server.Database
         #region Goobstation - Currency Store
         // Goobstation Start
 
-        public Task<List<InventoryItem>> GetPlayerInventory(NetUserId player)
+        public Task<List<CurrencyStoreInventoryItem>> GetPlayerInventory(NetUserId player)
         {
             DbReadOpsMetric.Inc();
             return RunDbCommand(() => _db.GetPlayerInventory(player));
         }
 
-        public Task<InventoryItem?> GetPlayerInventoryItem(int item)
+        public Task<CurrencyStoreInventoryItem?> GetPlayerInventoryItem(int item)
         {
             DbReadOpsMetric.Inc();
             return RunDbCommand(() => _db.GetPlayerInventoryItem(item));
@@ -1379,6 +1404,30 @@ namespace Content.Server.Database
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.RemovePermanentItemOwnership(player, prototype));
+        }
+
+        public Task<List<CurrencyStoreVoucher>> GetPlayerOwnedVouchers(NetUserId player)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPlayerOwnedVouchers(player));
+        }
+
+        public Task<CurrencyStoreVoucher?> GetStoreVoucher(int id)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetStoreVoucher(id));
+        }
+
+        public Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.AddStoreVoucher(player, prototype));
+        }
+
+        public Task RemoveStoreVoucher(int id)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.RemoveStoreVoucher(id));
         }
 
         // Goobstation End

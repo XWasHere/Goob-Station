@@ -90,6 +90,9 @@ public sealed class PollVote
     public DateTime VotedAt { get; set; }
 }
 
+/// <summary>
+///     Table containing the items owned by each player.
+/// </summary>
 [Index(nameof(PlayerUserId))]
 public sealed class GoobCurrencyStoreInventoryItem
 {
@@ -107,9 +110,29 @@ public sealed class GoobCurrencyStoreInventoryItem
     public int UsesLeft { get; set; }
 }
 
+/// <summary>
+///     Table containing a record for each permanent item purchased by a player.
+/// </summary>
 [PrimaryKey(nameof(PlayerUserId), nameof(Prototype))]
 public sealed class GoobCurrencyStorePermanentItem
 {
+    [ForeignKey("Player")]
+    public Guid PlayerUserId { get; set; }
+    public Player Player { get; set; } = default!;
+
+    public string Prototype { get; set; } = default!;
+}
+
+/// <summary>
+///     Table containing vouchers owned by each player. Vouchers are not unique, a player
+///     can own multiple of the same voucher.
+/// </summary>
+[Index(nameof(PlayerUserId))]
+public sealed class GoobCurrencyStoreVoucher
+{
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
     [ForeignKey("Player")]
     public Guid PlayerUserId { get; set; }
     public Player Player { get; set; } = default!;

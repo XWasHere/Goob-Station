@@ -194,6 +194,7 @@ namespace Content.Server.Database
         // Goobstation
         public DbSet<GoobCurrencyStoreInventoryItem> GoobCurrencyStoreInventory { get; set; } = default!;
         public DbSet<GoobCurrencyStorePermanentItem> GoobCurrencyStorePermanentItems { get; set; } = default!;
+        public DbSet<GoobCurrencyStoreVoucher> GoobCurrencyStoreVouchers { get; set; } = default!;
         public DbSet<Poll> Polls { get; set; } = default!;
         public DbSet<PollOption> PollOptions { get; set; } = default!;
         public DbSet<PollVote> PollVotes { get; set; } = default!;
@@ -592,7 +593,13 @@ namespace Content.Server.Database
                 .HasPrincipalKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Goobstation
+            modelBuilder.Entity<GoobCurrencyStoreVoucher>()
+                .HasOne(i => i.Player)
+                .WithMany(p => p.CurrencyStoreVouchers)
+                .HasForeignKey(i => i.PlayerUserId)
+                .HasPrincipalKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Poll>()
                 .HasOne(p => p.CreatedBy)
                 .WithMany()
@@ -841,6 +848,7 @@ namespace Content.Server.Database
         // Goobstation - Currency Store
         public List<GoobCurrencyStoreInventoryItem> CurrencyStoreInventory = null!;
         public List<GoobCurrencyStorePermanentItem> CurrencyStorePermanentItems = null!;
+        public List<GoobCurrencyStoreVoucher> CurrencyStoreVouchers = null!;
 
         public TimeSpan? LastRolledAntag { get; set; } // Goobstation
 

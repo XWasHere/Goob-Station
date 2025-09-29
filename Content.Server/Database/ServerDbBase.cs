@@ -139,6 +139,7 @@ using Content.Goobstation.Shared.CurrencyStore; // Goobstation - Currency Store
 using Content.Goobstation.Shared.CurrencyStore.Prototypes; // Goobstation - Currency Store
 using Content.Server.Administration.Logs;
 using Content.Server.Administration.Managers;
+using Content.Server.Database.Migrations.Sqlite;
 using Content.Shared._RMC14.LinkAccount;
 using Content.Shared.Administration.Logs;
 using Content.Shared.Construction.Prototypes;
@@ -345,7 +346,7 @@ namespace Content.Server.Database
             if (Enum.TryParse<Sex>(profile.Sex, true, out var sexVal))
                 sex = sexVal;
 
-            var spawnPriority = (SpawnPriorityPreference) profile.SpawnPriority;
+            var spawnPriority = (Shared.Preferences.SpawnPriorityPreference) profile.SpawnPriority;
 
             var gender = sex == Sex.Male ? Gender.Male : Gender.Female;
             if (Enum.TryParse<Gender>(profile.Gender, true, out var genderVal))
@@ -2087,17 +2088,17 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         #region Goobstation - Currency Store
         // Goobstation Start
 
-        public async Task<List<InventoryItem>> GetPlayerInventory(NetUserId player)
+        public async Task<List<CurrencyStoreInventoryItem>> GetPlayerInventory(NetUserId player)
         {
             await using var db = await GetDb();
 
             return await db.DbContext.GoobCurrencyStoreInventory
                 .Where(i => i.PlayerUserId == player)
-                .Select(i => MakeInventoryItem(i).Value)
+                .Select(i => MakeInventoryItem(i))
                 .ToListAsync();
         }
 
-        public async Task<InventoryItem?> GetPlayerInventoryItem(int id)
+        public async Task<CurrencyStoreInventoryItem?> GetPlayerInventoryItem(int id)
         {
             await using var db = await GetDb();
 
@@ -2153,12 +2154,12 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         }
 
         [return: NotNullIfNotNull(nameof(row))]
-        protected InventoryItem? MakeInventoryItem(GoobCurrencyStoreInventoryItem? row)
+        protected CurrencyStoreInventoryItem? MakeInventoryItem(GoobCurrencyStoreInventoryItem? row)
         {
             if (row == null)
                 return null;
 
-            return new InventoryItem()
+            return new CurrencyStoreInventoryItem()
             {
                 Id = row.Id,
                 Owner = new NetUserId(row.PlayerUserId),
@@ -2214,6 +2215,68 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
 
             db.DbContext.Remove(record);
             await db.DbContext.SaveChangesAsync();
+        }
+
+        public async Task<List<CurrencyStoreVoucher>> GetPlayerOwnedVouchers(NetUserId player)
+        {
+            await using var db = await GetDb();
+
+            return await db.DbContext.GoobCurrencyStoreVouchers
+                .Where(v => v.PlayerUserId == player.UserId)
+                .Select(v => MakeVoucher(v))
+                .ToListAsync();
+        }
+
+        public async Task<CurrencyStoreVoucher?> GetStoreVoucher(int id)
+        {
+            await using var db = await GetDb();
+
+            var record = await db.DbContext.GoobCurrencyStoreVouchers
+                .Where(v => v.Id == id)
+                .SingleOrDefaultAsync();
+
+            return MakeVoucher(record);
+        }
+
+        public async Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype)
+        {
+            await using var db = await GetDb();
+
+            db.DbContext.GoobCurrencyStoreVouchers.Add(new GoobCurrencyStoreVoucher()
+            {
+                PlayerUserId = player,
+                Prototype = prototype
+            });
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        public async Task RemoveStoreVoucher(int id)
+        {
+            await using var db = await GetDb();
+
+            var record = await db.DbContext.GoobCurrencyStoreVouchers
+                .Where(v => v.Id == id)
+                .SingleOrDefaultAsync();
+
+            if (record == null)
+                return;
+
+            db.DbContext.Remove(record);
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        [return: NotNullIfNotNull(nameof(row))]
+        protected CurrencyStoreVoucher? MakeVoucher(GoobCurrencyStoreVoucher? row)
+        {
+            if (row == null)
+                return null;
+
+            return new CurrencyStoreVoucher()
+            {
+                Id = row.Id,
+                Owner = new NetUserId(row.PlayerUserId),
+                Prototype = row.Prototype,
+            };
         }
 
         // Goobstation End
