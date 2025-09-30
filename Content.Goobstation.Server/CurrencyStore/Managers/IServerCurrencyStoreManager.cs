@@ -19,6 +19,14 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     #region Items
 
     /// <summary>
+    ///     Attempt to purchase an item.
+    /// </summary>
+    /// <param name="uid">User id of the purchasing user</param>
+    /// <param name="item">Item to purchase</param>
+    /// <returns>Returns true if the item was purchased successfully</returns>
+    public bool TryPurchaseItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item);
+
+    /// <summary>
     ///     Purchase an item and add it to a user's inventory.
     /// </summary>
     /// <remarks>
@@ -29,6 +37,13 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     /// <param name="uid">The user ID of the purchasing user.</param>
     /// <param name="item">The item prototype.</param>
     public void PurchaseItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item);
+
+    /// <summary>
+    ///     Attempt to activate an item
+    /// </summary>
+    /// <param name="item">The item to activate</param>
+    /// <returns>Returns true if the item was activated successfully</returns>
+    public bool TryActivateItem(CurrencyStoreInventoryItem item);
 
     /// <summary>
     ///     Activates an item, decreases it's use count, and potentially removes it
@@ -46,6 +61,14 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     /// </summary>
     /// <param name="item">Item to remove</param>
     public void RemoveItem(CurrencyStoreInventoryItem item);
+
+    /// <summary>
+    ///     Transfers an item from one user to another.
+    /// </summary>
+    /// <param name="item">The item to transfer</param>
+    /// <param name="toUid">The user to add the item to</param>
+    /// <returns>Returns true if the item was transferred successfully</returns>
+    public bool TryTransferItem(CurrencyStoreInventoryItem item, NetUserId toUid);
 
     #endregion
 
@@ -83,6 +106,14 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     public void RemoveVoucher(CurrencyStoreVoucher voucher);
 
     /// <summary>
+    ///     Try to redeem a voucher.
+    /// </summary>
+    /// <param name="voucher">The voucher to redeem</param>
+    /// <param name="item">The item to redeem for</param>
+    /// <returns>If the voucher was successfully redeemed</returns>
+    public bool TryRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> item);
+
+    /// <summary>
     ///     Redeem a voucher
     /// </summary>
     /// <remarks>
@@ -91,6 +122,14 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     /// <param name="voucher">The voucher to redeem</param>
     /// <param name="proto">The prototype of the item to be redeemed</param>
     public void RedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> proto);
+
+    /// <summary>
+    ///     Try to transfer a voucher to another player
+    /// </summary>
+    /// <param name="voucher">The voucher to transfer</param>
+    /// <param name="toUid"></param>
+    /// <returns></returns>
+    public bool TryTransferVoucher(CurrencyStoreVoucher voucher, NetUserId toUid);
 
     #endregion
 }
