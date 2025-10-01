@@ -634,82 +634,46 @@ namespace Content.Server.Database.Migrations.Postgres
                         });
                 });
 
-            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreInventoryItem", b =>
+            modelBuilder.Entity("Content.Server.Database.GoobPlayerStoreItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("goob_currency_store_inventory_id");
+                        .HasColumnName("goob_player_store_items_id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Immediate")
+                    b.Property<bool?>("Immediate")
                         .HasColumnType("boolean")
                         .HasColumnName("immediate");
 
-                    b.Property<Guid>("PlayerUserId")
+                    b.Property<int>("ItemType")
+                        .HasColumnType("integer")
+                        .HasColumnName("item_type");
+
+                    b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid")
-                        .HasColumnName("player_user_id");
+                        .HasColumnName("player_id");
 
                     b.Property<string>("Prototype")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("prototype");
 
-                    b.Property<int>("UsesLeft")
+                    b.Property<int?>("UsesLeft")
                         .HasColumnType("integer")
                         .HasColumnName("uses_left");
 
                     b.HasKey("Id")
-                        .HasName("PK_goob_currency_store_inventory");
+                        .HasName("PK_goob_player_store_items");
 
-                    b.HasIndex("PlayerUserId")
-                        .HasDatabaseName("IX_goob_currency_store_inventory_player_user_id");
+                    b.HasIndex("PlayerId")
+                        .HasDatabaseName("IX_goob_player_store_items_player_id");
 
-                    b.ToTable("goob_currency_store_inventory", (string)null);
-                });
+                    b.HasIndex("PlayerId", "Prototype")
+                        .HasDatabaseName("IX_goob_player_store_items_player_id_prototype");
 
-            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStorePermanentItem", b =>
-                {
-                    b.Property<Guid>("PlayerUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("player_user_id");
-
-                    b.Property<string>("Prototype")
-                        .HasColumnType("text")
-                        .HasColumnName("prototype");
-
-                    b.HasKey("PlayerUserId", "Prototype")
-                        .HasName("PK_goob_currency_store_permanent_items");
-
-                    b.ToTable("goob_currency_store_permanent_items", (string)null);
-                });
-
-            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreVoucher", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("goob_currency_store_vouchers_id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("PlayerUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("player_user_id");
-
-                    b.Property<string>("Prototype")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("prototype");
-
-                    b.HasKey("Id")
-                        .HasName("PK_goob_currency_store_vouchers");
-
-                    b.HasIndex("PlayerUserId")
-                        .HasDatabaseName("IX_goob_currency_store_vouchers_player_user_id");
-
-                    b.ToTable("goob_currency_store_vouchers", (string)null);
+                    b.ToTable("goob_player_store_items", (string)null);
                 });
 
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
@@ -2144,41 +2108,15 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("Server");
                 });
 
-            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreInventoryItem", b =>
+            modelBuilder.Entity("Content.Server.Database.GoobPlayerStoreItem", b =>
                 {
                     b.HasOne("Content.Server.Database.Player", "Player")
-                        .WithMany("CurrencyStoreInventory")
-                        .HasForeignKey("PlayerUserId")
+                        .WithMany("StoreItems")
+                        .HasForeignKey("PlayerId")
                         .HasPrincipalKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_goob_currency_store_inventory_player_player_user_id");
-
-                    b.Navigation("Player");
-                });
-
-            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStorePermanentItem", b =>
-                {
-                    b.HasOne("Content.Server.Database.Player", "Player")
-                        .WithMany("CurrencyStorePermanentItems")
-                        .HasForeignKey("PlayerUserId")
-                        .HasPrincipalKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_goob_currency_store_permanent_items_player_player_user_id");
-
-                    b.Navigation("Player");
-                });
-
-            modelBuilder.Entity("Content.Server.Database.GoobCurrencyStoreVoucher", b =>
-                {
-                    b.HasOne("Content.Server.Database.Player", "Player")
-                        .WithMany("CurrencyStoreVouchers")
-                        .HasForeignKey("PlayerUserId")
-                        .HasPrincipalKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_goob_currency_store_vouchers_player_player_user_id");
+                        .HasConstraintName("FK_goob_player_store_items_player_player_id");
 
                     b.Navigation("Player");
                 });
@@ -2701,12 +2639,6 @@ namespace Content.Server.Database.Migrations.Postgres
 
                     b.Navigation("AdminWatchlistsReceived");
 
-                    b.Navigation("CurrencyStoreInventory");
-
-                    b.Navigation("CurrencyStorePermanentItems");
-
-                    b.Navigation("CurrencyStoreVouchers");
-
                     b.Navigation("JobWhitelists");
 
                     b.Navigation("LinkedAccount");
@@ -2716,6 +2648,8 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("LinkingCodes");
 
                     b.Navigation("Patron");
+
+                    b.Navigation("StoreItems");
                 });
 
             modelBuilder.Entity("Content.Server.Database.Poll", b =>

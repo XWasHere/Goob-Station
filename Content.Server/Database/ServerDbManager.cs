@@ -529,7 +529,8 @@ namespace Content.Server.Database
         /// </summary>
         /// <param name="player">The user id of the player</param>
         /// <param name="prototype">The prototype id of the voucher</param>
-        Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype);
+        /// <param name="uses">The number of uses this voucher has</param>
+        Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses);
 
         /// <summary>
         /// Remove a voucher
@@ -1418,10 +1419,10 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.GetStoreVoucher(id));
         }
 
-        public Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype)
+        public Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses)
         {
             DbWriteOpsMetric.Inc();
-            return RunDbCommand(() => _db.AddStoreVoucher(player, prototype));
+            return RunDbCommand(() => _db.AddStoreVoucher(player, prototype, uses));
         }
 
         public Task RemoveStoreVoucher(int id)

@@ -192,12 +192,10 @@ namespace Content.Server.Database
         public DbSet<RMCPatronRoundEndNTShoutout> RMCPatronRoundEndNTShoutouts { get; set; } = default!;
 
         // Goobstation
-        public DbSet<GoobCurrencyStoreInventoryItem> GoobCurrencyStoreInventory { get; set; } = default!;
-        public DbSet<GoobCurrencyStorePermanentItem> GoobCurrencyStorePermanentItems { get; set; } = default!;
-        public DbSet<GoobCurrencyStoreVoucher> GoobCurrencyStoreVouchers { get; set; } = default!;
         public DbSet<Poll> Polls { get; set; } = default!;
         public DbSet<PollOption> PollOptions { get; set; } = default!;
         public DbSet<PollVote> PollVotes { get; set; } = default!;
+        public DbSet<GoobPlayerStoreItem> GoobPlayerStoreItems { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -579,24 +577,10 @@ namespace Content.Server.Database
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Goobstation
-            modelBuilder.Entity<GoobCurrencyStoreInventoryItem>()
+            modelBuilder.Entity<GoobPlayerStoreItem>()
                 .HasOne(i => i.Player)
-                .WithMany(i => i.CurrencyStoreInventory)
-                .HasForeignKey(i => i.PlayerUserId)
-                .HasPrincipalKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<GoobCurrencyStorePermanentItem>()
-                .HasOne(i => i.Player)
-                .WithMany(p => p.CurrencyStorePermanentItems)
-                .HasForeignKey(i => i.PlayerUserId)
-                .HasPrincipalKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<GoobCurrencyStoreVoucher>()
-                .HasOne(i => i.Player)
-                .WithMany(p => p.CurrencyStoreVouchers)
-                .HasForeignKey(i => i.PlayerUserId)
+                .WithMany(p => p.StoreItems)
+                .HasForeignKey(i => i.PlayerId)
                 .HasPrincipalKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -846,9 +830,7 @@ namespace Content.Server.Database
         public int ServerCurrency { get; set; } // Goobstation - Goob coin
 
         // Goobstation - Currency Store
-        public List<GoobCurrencyStoreInventoryItem> CurrencyStoreInventory = null!;
-        public List<GoobCurrencyStorePermanentItem> CurrencyStorePermanentItems = null!;
-        public List<GoobCurrencyStoreVoucher> CurrencyStoreVouchers = null!;
+        public List<GoobPlayerStoreItem> StoreItems { get; set; } = null!;
 
         public TimeSpan? LastRolledAntag { get; set; } // Goobstation
 

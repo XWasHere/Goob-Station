@@ -25,4 +25,9 @@ public sealed class CurrencyStoreVoucher
     ///     The prototype for this voucher.
     /// </summary>
     public ProtoId<CurrencyStoreVoucherPrototype> Prototype;
+
+    /// <summary>
+    ///     The number of uses remaining on this voucher
+    /// </summary>
+    public int UsesLeft;
 }

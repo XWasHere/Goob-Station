@@ -2092,8 +2092,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            return await db.DbContext.GoobCurrencyStoreInventory
-                .Where(i => i.PlayerUserId == player)
+            return await db.DbContext.GoobPlayerStoreItems
+                .Where(i => i.PlayerId == player && i.ItemType == StoreItemType.Inventory)
                 .Select(i => MakeInventoryItem(i))
                 .ToListAsync();
         }
@@ -2102,8 +2102,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            var row = await db.DbContext.GoobCurrencyStoreInventory
-                .Where(i => i.Id == id)
+            var row = await db.DbContext.GoobPlayerStoreItems
+                .Where(i => i.Id == id && i.ItemType == StoreItemType.Inventory)
                 .SingleOrDefaultAsync();
 
             return MakeInventoryItem(row);
@@ -2113,10 +2113,11 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            db.DbContext.GoobCurrencyStoreInventory.Add(new GoobCurrencyStoreInventoryItem()
+            db.DbContext.GoobPlayerStoreItems.Add(new GoobPlayerStoreItem()
             {
-                PlayerUserId = player,
+                PlayerId = player,
                 Prototype = prototype,
+                ItemType = StoreItemType.Inventory,
                 Immediate = immediate,
                 UsesLeft = uses,
             });
@@ -2127,14 +2128,14 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            var item = await db.DbContext.GoobCurrencyStoreInventory
-                .Where(i => i.Id == id)
+            var item = await db.DbContext.GoobPlayerStoreItems
+                .Where(i => i.Id == id && i.ItemType == StoreItemType.Inventory)
                 .SingleOrDefaultAsync();
 
             if (item == null)
                 return;
 
-            db.DbContext.GoobCurrencyStoreInventory.Remove(item);
+            db.DbContext.GoobPlayerStoreItems.Remove(item);
             await db.DbContext.SaveChangesAsync();
         }
 
@@ -2142,8 +2143,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            var item = await db.DbContext.GoobCurrencyStoreInventory
-                .Where(i => i.Id == id)
+            var item = await db.DbContext.GoobPlayerStoreItems
+                .Where(i => i.Id == id && i.ItemType == StoreItemType.Inventory)
                 .SingleOrDefaultAsync();
 
             if (item == null)
@@ -2154,7 +2155,7 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         }
 
         [return: NotNullIfNotNull(nameof(row))]
-        protected CurrencyStoreInventoryItem? MakeInventoryItem(GoobCurrencyStoreInventoryItem? row)
+        protected CurrencyStoreInventoryItem? MakeInventoryItem(GoobPlayerStoreItem? row)
         {
             if (row == null)
                 return null;
@@ -2162,10 +2163,10 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             return new CurrencyStoreInventoryItem()
             {
                 Id = row.Id,
-                Owner = new NetUserId(row.PlayerUserId),
+                Owner = new NetUserId(row.PlayerId),
                 Prototype = row.Prototype,
-                Immediate = row.Immediate,
-                UsesLeft = row.UsesLeft
+                Immediate = row.Immediate!.Value,
+                UsesLeft = row.UsesLeft!.Value,
             };
         }
 
@@ -2173,8 +2174,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            return await db.DbContext.GoobCurrencyStorePermanentItems
-                .Where(i => i.PlayerUserId == player.UserId)
+            return await db.DbContext.GoobPlayerStoreItems
+                .Where(i => i.PlayerId == player.UserId && i.ItemType == StoreItemType.Permanent)
                 .Select(i => new ProtoId<CurrencyStoreItemPrototype>(i.Prototype))
                 .ToListAsync();
         }
@@ -2183,8 +2184,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            return db.DbContext.GoobCurrencyStorePermanentItems
-                .Any(i => i.PlayerUserId == player.UserId && i.Prototype == prototype);
+            return db.DbContext.GoobPlayerStoreItems
+                .Any(i => i.PlayerId == player.UserId && i.Prototype == prototype && i.ItemType == StoreItemType.Permanent);
         }
 
         public async Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
@@ -2194,10 +2195,11 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             if (await GetPermanentItemOwnership(player, prototype))
                 return;
 
-            db.DbContext.GoobCurrencyStorePermanentItems.Add(new GoobCurrencyStorePermanentItem()
+            db.DbContext.GoobPlayerStoreItems.Add(new GoobPlayerStoreItem()
             {
-                PlayerUserId = player.UserId,
-                Prototype = prototype
+                PlayerId = player.UserId,
+                Prototype = prototype,
+                ItemType = StoreItemType.Permanent,
             });
             await db.DbContext.SaveChangesAsync();
         }
@@ -2206,8 +2208,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            var record = await db.DbContext.GoobCurrencyStorePermanentItems
-                .Where(i => i.PlayerUserId == player.UserId && i.Prototype == prototype)
+            var record = await db.DbContext.GoobPlayerStoreItems
+                .Where(i => i.PlayerId == player.UserId && i.Prototype == prototype && i.ItemType == StoreItemType.Permanent)
                 .FirstOrDefaultAsync();
 
             if (record == null)
@@ -2221,8 +2223,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            return await db.DbContext.GoobCurrencyStoreVouchers
-                .Where(v => v.PlayerUserId == player.UserId)
+            return await db.DbContext.GoobPlayerStoreItems
+                .Where(v => v.PlayerId == player.UserId && v.ItemType == StoreItemType.Voucher)
                 .Select(v => MakeVoucher(v))
                 .ToListAsync();
         }
@@ -2231,21 +2233,23 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            var record = await db.DbContext.GoobCurrencyStoreVouchers
-                .Where(v => v.Id == id)
+            var record = await db.DbContext.GoobPlayerStoreItems
+                .Where(v => v.Id == id && v.ItemType == StoreItemType.Voucher)
                 .SingleOrDefaultAsync();
 
             return MakeVoucher(record);
         }
 
-        public async Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype)
+        public async Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses)
         {
             await using var db = await GetDb();
 
-            db.DbContext.GoobCurrencyStoreVouchers.Add(new GoobCurrencyStoreVoucher()
+            db.DbContext.GoobPlayerStoreItems.Add(new GoobPlayerStoreItem()
             {
-                PlayerUserId = player,
-                Prototype = prototype
+                PlayerId = player,
+                Prototype = prototype,
+                ItemType = StoreItemType.Voucher,
+                UsesLeft = uses
             });
             await db.DbContext.SaveChangesAsync();
         }
@@ -2254,8 +2258,8 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            var record = await db.DbContext.GoobCurrencyStoreVouchers
-                .Where(v => v.Id == id)
+            var record = await db.DbContext.GoobPlayerStoreItems
+                .Where(v => v.Id == id && v.ItemType == StoreItemType.Voucher)
                 .SingleOrDefaultAsync();
 
             if (record == null)
@@ -2266,7 +2270,7 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         }
 
         [return: NotNullIfNotNull(nameof(row))]
-        protected CurrencyStoreVoucher? MakeVoucher(GoobCurrencyStoreVoucher? row)
+        protected CurrencyStoreVoucher? MakeVoucher(GoobPlayerStoreItem? row)
         {
             if (row == null)
                 return null;
@@ -2274,8 +2278,9 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             return new CurrencyStoreVoucher()
             {
                 Id = row.Id,
-                Owner = new NetUserId(row.PlayerUserId),
+                Owner = new NetUserId(row.PlayerId),
                 Prototype = row.Prototype,
+                UsesLeft = row.UsesLeft!.Value,
             };
         }
 

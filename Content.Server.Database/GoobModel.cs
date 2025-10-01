@@ -90,52 +90,30 @@ public sealed class PollVote
     public DateTime VotedAt { get; set; }
 }
 
-/// <summary>
-///     Table containing the items owned by each player.
-/// </summary>
-[Index(nameof(PlayerUserId))]
-public sealed class GoobCurrencyStoreInventoryItem
+[Table("goob_player_store_items")]
+[Index(nameof(PlayerId))]
+[Index(nameof(PlayerId), nameof(Prototype))]
+public sealed class GoobPlayerStoreItem
 {
     [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    [ForeignKey("Player")]
-    public Guid PlayerUserId { get; set; }
+    [ForeignKey(nameof(Player))]
+    public Guid PlayerId { get; set; }
     public Player Player { get; set; } = default!;
 
-    public string Prototype { get; set; } = default!;
+    public string Prototype { get; set; } = string.Empty;
 
-    public bool Immediate { get; set; }
+    public StoreItemType ItemType { get; set; }
 
-    public int UsesLeft { get; set; }
+    public bool? Immediate { get; set; }
+
+    public int? UsesLeft { get; set; }
 }
 
-/// <summary>
-///     Table containing a record for each permanent item purchased by a player.
-/// </summary>
-[PrimaryKey(nameof(PlayerUserId), nameof(Prototype))]
-public sealed class GoobCurrencyStorePermanentItem
+public enum StoreItemType : int
 {
-    [ForeignKey("Player")]
-    public Guid PlayerUserId { get; set; }
-    public Player Player { get; set; } = default!;
-
-    public string Prototype { get; set; } = default!;
-}
-
-/// <summary>
-///     Table containing vouchers owned by each player. Vouchers are not unique, a player
-///     can own multiple of the same voucher.
-/// </summary>
-[Index(nameof(PlayerUserId))]
-public sealed class GoobCurrencyStoreVoucher
-{
-    [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
-
-    [ForeignKey("Player")]
-    public Guid PlayerUserId { get; set; }
-    public Player Player { get; set; } = default!;
-
-    public string Prototype { get; set; } = default!;
+    Inventory,
+    Permanent,
+    Voucher,
 }
