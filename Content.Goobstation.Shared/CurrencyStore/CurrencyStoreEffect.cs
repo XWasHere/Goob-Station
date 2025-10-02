@@ -21,27 +21,11 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 public abstract partial class CurrencyStoreEffect
 {
     /// <summary>
-    ///     The description displayed to the user, can be modified by items if they want to display
-    ///     a different description.
-    /// </summary>
-    [DataField("description")]
-    public abstract LocId LocalizedDescription { get; protected set; }
-
-    /// <summary>
     ///     Executes the effect.
     /// </summary>
     /// <param name="player">The player entity</param>
     /// <param name="entityManager">EntityManager system</param>
     public abstract void ExecuteEffect(EntityUid player, IEntityManager entityManager);
-
-    /// <summary>
-    ///     Get the description of the effect that is displayed to the user. Intended for future use.
-    ///     The description should be clear and concise, and should be able to be displayed in a single line.
-    /// </summary>
-    public string GetLocalizedDescription()
-    {
-        return Loc.GetString(LocalizedDescription);
-    }
 
     /// <summary>
     ///     Get allowed round states for the effect to be executed. Returns <see cref="CurrencyStoreRoundState.Always">Always</see>
