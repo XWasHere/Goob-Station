@@ -6,8 +6,6 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 
 /// <summary>
 ///     Structure representing a single owned voucher.
-///
-///     See GoobCurrencyStoreVoucher for the in-database structure.
 /// </summary>
 public sealed class CurrencyStoreVoucher
 {

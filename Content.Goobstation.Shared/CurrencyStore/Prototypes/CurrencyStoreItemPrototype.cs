@@ -6,24 +6,8 @@ namespace Content.Goobstation.Shared.CurrencyStore.Prototypes;
 ///     An item in the game store.
 /// </summary>
 [Prototype]
-public sealed partial class CurrencyStoreItemPrototype : IPrototype
+public sealed partial class CurrencyStoreItemPrototype : CurrencyStoreBaseItemPrototype
 {
-    /// <inheritdoc/>
-    [IdDataField]
-    public string ID { get; private set; } = default!;
-
-    /// <summary>
-    ///     The name displayed to the user.
-    /// </summary>
-    [DataField(required: true)]
-    public LocId Name { get; private set; }
-
-    /// <summary>
-    ///     The description displayed to the user.
-    /// </summary>
-    [DataField(required: true)]
-    public LocId Description { get; private set; }
-
     /// <summary>
     ///     The store category this item belongs to
     /// </summary>
@@ -70,7 +54,7 @@ public sealed partial class CurrencyStoreItemPrototype : IPrototype
     ///     Tags associated with this item.
     /// </summary>
     [DataField]
-    public HashSet<ProtoId<CurrencyStoreTagPrototype>> Tags = new();
+    public HashSet<string> Tags = new();
 
     /// <summary>
     ///     Conditions evaluated before activating an item. If any condition fails, the item will not be used.
