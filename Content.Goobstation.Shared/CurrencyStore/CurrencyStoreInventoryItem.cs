@@ -1,12 +1,14 @@
 using Content.Goobstation.Shared.CurrencyStore.Prototypes;
 using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
 
 namespace Content.Goobstation.Shared.CurrencyStore;
 
 /// <summary>
 ///     Class representing a single owned item in a player's inventory.
 /// </summary>
+[Serializable, NetSerializable]
 public sealed class CurrencyStoreInventoryItem
 {
     /// <summary>

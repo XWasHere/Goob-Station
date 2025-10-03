@@ -2,7 +2,6 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Goobstation.Shared.CurrencyStore.Prototypes;
 
-[Prototype]
 public abstract class CurrencyStoreBaseItemPrototype : IPrototype
 {
     /// <inheritdoc/>

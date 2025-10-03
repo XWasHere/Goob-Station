@@ -28,11 +28,7 @@ public abstract partial class CurrencyStoreEffect
     public abstract void ExecuteEffect(EntityUid player, IEntityManager entityManager);
 
     /// <summary>
-    ///     Get allowed round states for the effect to be executed. Returns <see cref="CurrencyStoreRoundState.Always">Always</see>
-    ///     if not overridden
+    ///     Get allowed round states for the effect to be executed.
     /// </summary>
-    public CurrencyStoreRoundState GetAllowedRoundStates()
-    {
-        return CurrencyStoreRoundState.Always;
-    }
+    public abstract CurrencyStoreRoundState GetAllowedRoundStates();
 }

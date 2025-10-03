@@ -1,3 +1,4 @@
+using Content.Goobstation.Shared.Serialization;
 using Robust.Shared.Prototypes;
 
 namespace Content.Goobstation.Shared.CurrencyStore.Prototypes;
@@ -59,12 +60,12 @@ public sealed partial class CurrencyStoreItemPrototype : CurrencyStoreBaseItemPr
     /// <summary>
     ///     Conditions evaluated before activating an item. If any condition fails, the item will not be used.
     /// </summary>
-    [DataField(serverOnly: true)]
-    public List<CurrencyStoreCondition> Conditions = new();
+    [DataField(customTypeSerializer: typeof(OptionalAbstractTypeSerializer<CurrencyStoreCondition>))]
+    public CurrencyStoreCondition[] Conditions = default!;
 
     /// <summary>
     ///     Effects executed after activating an item.
     /// </summary>
     [DataField(required: true, serverOnly: true)]
-    public List<CurrencyStoreEffect> Effects = new();
+    public CurrencyStoreEffect[] Effects = default!;
 }
