@@ -18,7 +18,11 @@
   priceIncrease: 10000
   priceDecrease: 1000
   immediate: true
-  effects: [] # TODO: Add effects...
+  conditions:
+  - !type:CurrencyStoreLivingCondition
+  effects:
+  - !type:CurrencyStoreGiveItemEffect
+    prototype: MeleeDebugGib
 
 # test multiple uses work properly
 - type: currencyStoreItem
