@@ -8,6 +8,11 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 public abstract partial class CurrencyStoreCondition
 {
     /// <summary>
+    ///     When the condition can be executed.
+    /// </summary>
+    public abstract CurrencyStoreRoundState AllowedRoundState { get; }
+
+    /// <summary>
     ///     Evaluate the condition. If this returns false, the item it is attached to can not be used.
     /// </summary>
     /// <param name="player">The player entity</param>
@@ -21,10 +26,4 @@ public abstract partial class CurrencyStoreCondition
     ///     clear and concise and should be able to be displayed in a single line.
     /// </summary>
     public abstract string GetLocalizedDescription();
-
-    /// <summary>
-    ///     Get allowed round states for the condition to be executed. Returns <see cref="CurrencyStoreRoundState.Always">Always</see>
-    ///     if not overridden
-    /// </summary>
-    public abstract CurrencyStoreRoundState GetAllowedRoundStates();
 }

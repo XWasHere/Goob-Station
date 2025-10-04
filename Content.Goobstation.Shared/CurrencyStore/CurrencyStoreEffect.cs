@@ -21,14 +21,14 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 public abstract partial class CurrencyStoreEffect
 {
     /// <summary>
+    ///     When this effect can be executed.
+    /// </summary>
+    public abstract CurrencyStoreRoundState AllowedRoundState { get; }
+
+    /// <summary>
     ///     Executes the effect.
     /// </summary>
     /// <param name="player">The player entity</param>
     /// <param name="entityManager">EntityManager system</param>
     public abstract void ExecuteEffect(EntityUid player, IEntityManager entityManager);
-
-    /// <summary>
-    ///     Get allowed round states for the effect to be executed.
-    /// </summary>
-    public abstract CurrencyStoreRoundState GetAllowedRoundStates();
 }

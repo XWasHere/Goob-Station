@@ -9,6 +9,8 @@ public sealed partial class CurrencyStoreGiveItemEffect : CurrencyStoreEffect
     [DataField(required: true)]
     public EntProtoId Prototype = default!;
 
+    public override CurrencyStoreRoundState AllowedRoundState => CurrencyStoreRoundState.InRound;
+
     public override void ExecuteEffect(EntityUid player, IEntityManager entityManager)
     {
         // Create the item
@@ -16,10 +18,5 @@ public sealed partial class CurrencyStoreGiveItemEffect : CurrencyStoreEffect
 
         // Put the item in the player's hand
         entityManager.System<SharedHandsSystem>().PickupOrDrop(player, thing);
-    }
-
-    public override CurrencyStoreRoundState GetAllowedRoundStates()
-    {
-        return CurrencyStoreRoundState.InRound;
     }
 }
