@@ -1,3 +1,4 @@
+using Content.Goobstation.Shared.CurrencyStore.Managers;
 using Content.Goobstation.Shared.Serialization;
 using Robust.Shared.Prototypes;
 
@@ -26,6 +27,20 @@ public sealed partial class CurrencyStoreItemPrototype : CurrencyStoreBaseItemPr
     /// </summary>
     [DataField(required: true)]
     public int Price { get; private set; }
+
+    /// <summary>
+    ///     Whether an item is permanent or not.
+    /// </summary>
+    /// <remarks>
+    ///     Permanent items, while defined with the same prototype due to their similarity
+    ///     to regular items, function completely differently internally. Permanent items,
+    ///     rather than being activatable, are stored as a record with their prototype name,
+    ///     other systems can query the <see cref="ISharedCurrencyStoreManager"/> to check
+    ///     if a user owns it, and can then act on that information to, for example, allow the
+    ///     player to use a unique trait or equip an unique item in their loadout menu.
+    /// </remarks>
+    [DataField]
+    public bool Permanent { get; private set; } = false;
 
     /// <summary>
     ///     The amount that the cost increases each time this item is purchased.
