@@ -538,6 +538,25 @@ namespace Content.Server.Database
         /// <param name="id">The database id of the voucher</param>
         Task RemoveStoreVoucher(int id);
 
+        /// <summary>
+        /// Get all store item data in the database
+        /// </summary>
+        Task<Dictionary<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData>> GetAllItemData();
+
+        /// <summary>
+        /// Get the data for a specific store item
+        /// </summary>
+        /// <param name="proto">The prototype of the item to look for</param>
+        Task<CurrencyStoreItemData?> GetItemData(ProtoId<CurrencyStoreItemPrototype> proto);
+
+        /// <summary>
+        /// Update the data for a specific store item
+        /// </summary>
+        /// <param name="proto">The prototype of the item to update</param>
+        /// <param name="price">The new price</param>
+        Task UpdateItemData(ProtoId<CurrencyStoreItemPrototype> proto, int price);
+
+
         // Goobstation End
         #endregion
 
@@ -1429,6 +1448,24 @@ namespace Content.Server.Database
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.RemoveStoreVoucher(id));
+        }
+
+        public Task<Dictionary<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData>> GetAllItemData()
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetAllItemData());
+        }
+
+        public Task<CurrencyStoreItemData?> GetItemData(ProtoId<CurrencyStoreItemPrototype> proto)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetItemData(proto));
+        }
+
+        public Task UpdateItemData(ProtoId<CurrencyStoreItemPrototype> proto, int price)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.UpdateItemData(proto, price));
         }
 
         // Goobstation End

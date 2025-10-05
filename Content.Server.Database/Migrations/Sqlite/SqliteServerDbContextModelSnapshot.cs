@@ -637,6 +637,31 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.ToTable("goob_player_store_items", (string)null);
                 });
 
+            modelBuilder.Entity("Content.Server.Database.GoobStoreItemData", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("goob_store_item_data_id");
+
+                    b.Property<int>("Price")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("price");
+
+                    b.Property<string>("Prototype")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("prototype");
+
+                    b.HasKey("Id")
+                        .HasName("PK_goob_store_item_data");
+
+                    b.HasIndex("Prototype")
+                        .HasDatabaseName("IX_goob_store_item_data_prototype");
+
+                    b.ToTable("goob_store_item_data", (string)null);
+                });
+
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
                 {
                     b.Property<int>("Id")

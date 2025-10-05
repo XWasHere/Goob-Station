@@ -2284,6 +2284,64 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             };
         }
 
+        public async Task<Dictionary<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData>> GetAllItemData()
+        {
+            await using var db = await GetDb();
+
+            // This sucks
+            var records = await db.DbContext.GoobStoreItemData
+                .ToDictionaryAsync(
+                    i => new ProtoId<CurrencyStoreItemPrototype>(i.Prototype),
+                    i => MakeItemData(i)!);
+
+            return records;
+        }
+
+        public async Task<CurrencyStoreItemData?> GetItemData(ProtoId<CurrencyStoreItemPrototype> proto)
+        {
+            await using var db = await GetDb();
+
+            var record = await db.DbContext.GoobStoreItemData
+                .Where(i => i.Prototype == proto)
+                .SingleOrDefaultAsync();
+
+            return MakeItemData(record);
+        }
+
+        public async Task UpdateItemData(ProtoId<CurrencyStoreItemPrototype> proto, int price)
+        {
+            await using var db = await GetDb();
+
+            var record = await db.DbContext.GoobStoreItemData
+                .Where(i => i.Prototype == proto)
+                .SingleOrDefaultAsync();
+
+            if (record == null)
+            {
+                record = new GoobStoreItemData
+                {
+                    Prototype = proto,
+                };
+
+                await db.DbContext.GoobStoreItemData.AddAsync(record);
+            }
+
+            record.Price = price;
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        [return: NotNullIfNotNull(nameof(row))]
+        protected CurrencyStoreItemData? MakeItemData(GoobStoreItemData? row)
+        {
+            if (row == null)
+                return null;
+
+            return new CurrencyStoreItemData
+            {
+                Price = row.Price
+            };
+        }
+
         // Goobstation End
         #endregion
 

@@ -117,3 +117,15 @@ public enum StoreItemType : int
     Permanent,
     Voucher,
 }
+
+[Table("goob_store_item_data")]
+[Index(nameof(Prototype))]
+public sealed class GoobStoreItemData
+{
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    public string Prototype { get; set; } = string.Empty;
+
+    public int Price { get; set; }
+}

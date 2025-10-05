@@ -196,6 +196,7 @@ namespace Content.Server.Database
         public DbSet<PollOption> PollOptions { get; set; } = default!;
         public DbSet<PollVote> PollVotes { get; set; } = default!;
         public DbSet<GoobPlayerStoreItem> GoobPlayerStoreItems { get; set; } = default!;
+        public DbSet<GoobStoreItemData> GoobStoreItemData { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
