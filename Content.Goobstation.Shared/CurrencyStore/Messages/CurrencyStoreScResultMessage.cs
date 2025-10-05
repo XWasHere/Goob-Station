@@ -20,7 +20,7 @@ public sealed class CurrencyStoreScResultMessage : NetMessage
     /// <summary>
     ///     An string describing the outcome to the user.
     /// </summary>
-    public string Reason = null!;
+    public string Reason = string.Empty;
 
     public override void ReadFromBuffer(NetIncomingMessage buffer, IRobustSerializer serializer)
     {
