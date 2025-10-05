@@ -7,14 +7,6 @@ namespace Content.Goobstation.Client.CurrencyStore.Managers;
 
 public interface IClientCurrencyStoreManager : ISharedCurrencyStoreManager
 {
-    #region Lifecycle
-
-    public void Initialize();
-
-    public void Shutdown();
-
-    #endregion
-
     #region Items
 
     /// <summary>
