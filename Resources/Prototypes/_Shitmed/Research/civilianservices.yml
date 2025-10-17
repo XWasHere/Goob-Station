@@ -130,7 +130,7 @@
   discipline: CivilianServices
   tier: 2
   cost: 10000
-  position: -6,7
+  position: -6,6
   technologyPrerequisites:
   - BasicAugmentation
   recipeUnlocks:
