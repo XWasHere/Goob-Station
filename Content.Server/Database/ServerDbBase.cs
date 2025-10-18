@@ -2092,10 +2092,11 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            return await db.DbContext.GoobPlayerStoreItems
+            var records = await db.DbContext.GoobPlayerStoreItems
                 .Where(i => i.PlayerId == player && i.ItemType == StoreItemType.Inventory)
-                .Select(i => MakeInventoryItem(i))
                 .ToListAsync();
+
+            return records.Select(MakeInventoryItem).ToList()!;
         }
 
         public async Task<CurrencyStoreInventoryItem?> GetPlayerInventoryItem(int id)
@@ -2109,19 +2110,22 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             return MakeInventoryItem(row);
         }
 
-        public async Task AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses)
+        public async Task<CurrencyStoreInventoryItem> AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses)
         {
             await using var db = await GetDb();
 
-            db.DbContext.GoobPlayerStoreItems.Add(new GoobPlayerStoreItem()
+            var item = new GoobPlayerStoreItem()
             {
                 PlayerId = player,
                 Prototype = prototype,
                 ItemType = StoreItemType.Inventory,
                 Immediate = immediate,
                 UsesLeft = uses,
-            });
+            };
+            db.DbContext.GoobPlayerStoreItems.Add(item);
             await db.DbContext.SaveChangesAsync();
+
+            return MakeInventoryItem(item);
         }
 
         public async Task DeletePlayerInventoryItem(int id)
@@ -2154,13 +2158,28 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             await db.DbContext.SaveChangesAsync();
         }
 
+        public async Task SetPlayerItemOwner(int id, NetUserId owner)
+        {
+            await using var db = await GetDb();
+
+            var item = await db.DbContext.GoobPlayerStoreItems
+                .Where(i => i.Id == id && i.ItemType == StoreItemType.Inventory)
+                .SingleOrDefaultAsync();
+
+            if (item == null)
+                return;
+
+            item.PlayerId = owner;
+            await db.DbContext.SaveChangesAsync();
+        }
+
         [return: NotNullIfNotNull(nameof(row))]
         protected CurrencyStoreInventoryItem? MakeInventoryItem(GoobPlayerStoreItem? row)
         {
             if (row == null)
                 return null;
 
-            return new CurrencyStoreInventoryItem()
+            return new CurrencyStoreInventoryItem
             {
                 Id = row.Id,
                 Owner = new NetUserId(row.PlayerId),
@@ -2174,10 +2193,11 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            return await db.DbContext.GoobPlayerStoreItems
+            var records = await db.DbContext.GoobPlayerStoreItems
                 .Where(i => i.PlayerId == player.UserId && i.ItemType == StoreItemType.Permanent)
-                .Select(i => new ProtoId<CurrencyStoreItemPrototype>(i.Prototype))
                 .ToListAsync();
+
+            return records.Select(i => new ProtoId<CurrencyStoreItemPrototype>(i.Prototype)).ToList();
         }
 
         public async Task<bool> GetPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
@@ -2223,10 +2243,11 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
             await using var db = await GetDb();
 
-            return await db.DbContext.GoobPlayerStoreItems
+            var records = await db.DbContext.GoobPlayerStoreItems
                 .Where(v => v.PlayerId == player.UserId && v.ItemType == StoreItemType.Voucher)
-                .Select(v => MakeVoucher(v))
                 .ToListAsync();
+
+            return records.Select(MakeVoucher).ToList()!;
         }
 
         public async Task<CurrencyStoreVoucher?> GetStoreVoucher(int id)
@@ -2240,18 +2261,21 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             return MakeVoucher(record);
         }
 
-        public async Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses)
+        public async Task<CurrencyStoreVoucher> AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses)
         {
             await using var db = await GetDb();
 
-            db.DbContext.GoobPlayerStoreItems.Add(new GoobPlayerStoreItem()
+            var voucher = new GoobPlayerStoreItem()
             {
                 PlayerId = player,
                 Prototype = prototype,
                 ItemType = StoreItemType.Voucher,
                 UsesLeft = uses
-            });
+            };
+            db.DbContext.GoobPlayerStoreItems.Add(voucher);
             await db.DbContext.SaveChangesAsync();
+
+            return MakeVoucher(voucher);
         }
 
         public async Task RemoveStoreVoucher(int id)
@@ -2267,6 +2291,13 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
 
             db.DbContext.Remove(record);
             await db.DbContext.SaveChangesAsync();
+        }
+
+        public async Task SetVoucherOwner(int id, NetUserId owner)
+        {
+            // These are stored the exact same way, if we ever need different
+            // logic here, replace this call with it.
+            await SetPlayerItemOwner(id, owner);
         }
 
         [return: NotNullIfNotNull(nameof(row))]
@@ -2290,11 +2321,11 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
 
             // This sucks
             var records = await db.DbContext.GoobStoreItemData
-                .ToDictionaryAsync(
-                    i => new ProtoId<CurrencyStoreItemPrototype>(i.Prototype),
-                    i => MakeItemData(i)!);
+                .ToListAsync();
 
-            return records;
+            return records.ToDictionary(
+                i => new ProtoId<CurrencyStoreItemPrototype>(i.Prototype),
+                i => MakeItemData(i)!);
         }
 
         public async Task<CurrencyStoreItemData?> GetItemData(ProtoId<CurrencyStoreItemPrototype> proto)

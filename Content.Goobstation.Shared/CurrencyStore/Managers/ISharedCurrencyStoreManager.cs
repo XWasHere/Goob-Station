@@ -22,28 +22,22 @@ public interface ISharedCurrencyStoreManager
     /// <summary>
     ///     Get the specified player's inventory.
     /// </summary>
-    /// <param name="uid">The user id of the user to query</param>
-    public Task<List<CurrencyStoreInventoryItem>> GetInventory(NetUserId uid);
+    /// <param name="uid">The user id of the user to query. It is the caller's job to verify the uid is valid.</param>
+    public List<CurrencyStoreInventoryItem> GetInventory(NetUserId uid);
 
     /// <summary>
     ///     Checks if the specified user can afford the specified item.
     /// </summary>
     /// <param name="uid">The user id of the user to check</param>
     /// <param name="item">The item to check</param>
-    public Task<bool> CanAfford(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item);
+    public bool CanAfford(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item);
 
     /// <summary>
     ///     Checks if a user is able to purchase an item.
     /// </summary>
     /// <param name="uid">The user ID of the purchasing user.</param>
     /// <param name="item">The item prototype.</param>
-    public Task<bool> CanPurchaseItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item);
-
-    /// <summary>
-    ///     Check if an item can be activated.
-    /// </summary>
-    /// <param name="item">The item to activate</param>
-    public Task<bool> CanActivateItem(CurrencyStoreInventoryItem item);
+    public bool CanPurchaseItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item);
 
     #endregion
 

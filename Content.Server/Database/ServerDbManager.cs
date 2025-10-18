@@ -470,7 +470,7 @@ namespace Content.Server.Database
         /// <param name="prototype">The prototype of the item</param>
         /// <param name="immediate">If the item should immediately activate</param>
         /// <param name="uses">The number of times the item can be used</param>
-        Task AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses);
+        Task<CurrencyStoreInventoryItem> AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses);
 
         /// <summary>
         /// Remove an item from a player's inventory
@@ -484,6 +484,13 @@ namespace Content.Server.Database
         /// <param name="id">The database id of the item</param>
         /// <param name="uses">The new number of uses</param>
         Task SetPlayerInventoryItemUses(int id, int uses);
+
+        /// <summary>
+        /// Set the owner of an item.
+        /// </summary>
+        /// <param name="id">The database id of the item</param>
+        /// <param name="owner">The user id of the new owner</param>
+        Task SetPlayerItemOwner(int id, NetUserId owner);
 
         /// <summary>
         /// Get the permanent items purchased by the player.
@@ -530,13 +537,20 @@ namespace Content.Server.Database
         /// <param name="player">The user id of the player</param>
         /// <param name="prototype">The prototype id of the voucher</param>
         /// <param name="uses">The number of uses this voucher has</param>
-        Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses);
+        Task<CurrencyStoreVoucher> AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses);
 
         /// <summary>
         /// Remove a voucher
         /// </summary>
         /// <param name="id">The database id of the voucher</param>
         Task RemoveStoreVoucher(int id);
+
+        /// <summary>
+        /// Set the owner of a voucher.
+        /// </summary>
+        /// <param name="id">The database id of the voucher</param>
+        /// <param name="owner">The user id of the new owner</param>
+        Task SetVoucherOwner(int id, NetUserId owner);
 
         /// <summary>
         /// Get all store item data in the database
@@ -1384,7 +1398,7 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.GetPlayerInventoryItem(item));
         }
 
-        public Task AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses)
+        public Task<CurrencyStoreInventoryItem> AddPlayerInventoryItem(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype, bool immediate, int uses)
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.AddPlayerInventoryItem(player, prototype, immediate, uses));
@@ -1400,6 +1414,12 @@ namespace Content.Server.Database
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.SetPlayerInventoryItemUses(id, uses));
+        }
+
+        public Task SetPlayerItemOwner(int id, NetUserId owner)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.SetPlayerItemOwner(id, owner));
         }
 
         public Task<List<ProtoId<CurrencyStoreItemPrototype>>> GetPlayerOwnedPermanentItems(NetUserId player)
@@ -1438,7 +1458,7 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.GetStoreVoucher(id));
         }
 
-        public Task AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses)
+        public Task<CurrencyStoreVoucher> AddStoreVoucher(NetUserId player, ProtoId<CurrencyStoreVoucherPrototype> prototype, int uses)
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.AddStoreVoucher(player, prototype, uses));
@@ -1448,6 +1468,12 @@ namespace Content.Server.Database
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.RemoveStoreVoucher(id));
+        }
+
+        public Task SetVoucherOwner(int id, NetUserId owner)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.SetVoucherOwner(id, owner));
         }
 
         public Task<Dictionary<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData>> GetAllItemData()

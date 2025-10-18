@@ -1,3 +1,5 @@
+using Robust.Shared.Network;
+
 namespace Content.Goobstation.Shared.CurrencyStore;
 
 /// <summary>
@@ -28,7 +30,6 @@ public abstract partial class CurrencyStoreEffect
     /// <summary>
     ///     Executes the effect.
     /// </summary>
-    /// <param name="player">The player entity</param>
-    /// <param name="entityManager">EntityManager system</param>
-    public abstract void ExecuteEffect(EntityUid player, IEntityManager entityManager);
+    /// <param name="player">The player user id</param>
+    public abstract void ExecuteEffect(NetUserId player, EntityManager entityManager);
 }

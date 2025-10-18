@@ -35,35 +35,40 @@ public sealed class CurrencyStoreScRefreshMessage : NetMessage
     {
         // Read inventory
         var inventoryLength = buffer.ReadVariableInt32();
-        if (inventoryLength != 0)
+        if (inventoryLength >= 0)
         {
-            using var stream = new MemoryStream(inventoryLength);
-            buffer.ReadAlignedMemory(stream, inventoryLength);
-            serializer.DeserializeDirect(stream, out Inventory);
+            Inventory = [];
+            for (var i = 0; i < inventoryLength; i++)
+            {
+                using var stream = new MemoryStream(inventoryLength);
+                buffer.ReadAlignedMemory(stream, inventoryLength);
+                serializer.DeserializeDirect(stream, out CurrencyStoreInventoryItem data);
+                Inventory.Add(data);
+            }
         }
 
         // Read vouchers
         var vouchersLength = buffer.ReadVariableInt32();
-        if (vouchersLength != 0)
+        if (vouchersLength >= 0)
         {
-            using var stream = new MemoryStream(vouchersLength);
-            buffer.ReadAlignedMemory(stream, vouchersLength);
-            serializer.DeserializeDirect(stream, out Vouchers);
+            Vouchers = [];
+            for (var i = 0; i < vouchersLength; i++)
+            {
+                using var stream = new MemoryStream(vouchersLength);
+                buffer.ReadAlignedMemory(stream, vouchersLength);
+                serializer.DeserializeDirect(stream, out CurrencyStoreVoucher data);
+                Vouchers.Add(data);
+            }
         }
 
         // Read permanent items
         var permanentLength = buffer.ReadVariableInt32();
-        if (permanentLength != 0)
+        if (permanentLength >= 0)
         {
-            using var stream = new MemoryStream(permanentLength);
-            buffer.ReadAlignedMemory(stream, permanentLength);
-            serializer.DeserializeDirect(stream, out List<string> strings);
-
-            // Convert strings to items
-            PermanentItems = new List<ProtoId<CurrencyStoreItemPrototype>>();
-            foreach (var str in strings)
+            PermanentItems = [];
+            for (var i = 0; i < permanentLength; i++)
             {
-                PermanentItems.Add(str);
+                PermanentItems.Add(buffer.ReadString());
             }
         }
     }
@@ -71,52 +76,32 @@ public sealed class CurrencyStoreScRefreshMessage : NetMessage
     public override void WriteToBuffer(NetOutgoingMessage buffer, IRobustSerializer serializer)
     {
         // Write inventory
-        if (Inventory != null)
+        buffer.WriteVariableInt32(Inventory?.Count ?? -1);
+        foreach (var item in Inventory ?? [])
         {
             using var stream = new MemoryStream();
-            serializer.SerializeDirect(stream, Inventory);
+            serializer.SerializeDirect(stream, item);
             buffer.WriteVariableInt32((int) stream.Length);
             stream.TryGetBuffer(out var segment);
             buffer.Write(segment);
-        }
-        else
-        {
-            buffer.WriteVariableInt32(0);
         }
 
         // Write vouchers
-        if (Vouchers != null)
+        buffer.WriteVariableInt32(Vouchers?.Count ?? -1);
+        foreach (var item in Vouchers ?? [])
         {
             using var stream = new MemoryStream();
-            serializer.SerializeDirect(stream, Vouchers);
+            serializer.SerializeDirect(stream, item);
             buffer.WriteVariableInt32((int) stream.Length);
             stream.TryGetBuffer(out var segment);
             buffer.Write(segment);
-        }
-        else
-        {
-            buffer.WriteVariableInt32(0);
         }
 
         // Write permanent items
-        if (PermanentItems != null)
+        buffer.WriteVariableInt32(PermanentItems?.Count ?? -1);
+        foreach (var item in PermanentItems ?? [])
         {
-            // Convert items to strings
-            List<string> strings = [];
-            foreach (var proto in PermanentItems)
-            {
-                strings.Add(proto);
-            }
-
-            using var stream = new MemoryStream();
-            serializer.SerializeDirect(stream, strings);
-            buffer.WriteVariableInt32((int) stream.Length);
-            stream.TryGetBuffer(out var segment);
-            buffer.Write(segment);
-        }
-        else
-        {
-            buffer.WriteVariableInt32(0);
+            buffer.Write(item);
         }
     }
 }

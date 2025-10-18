@@ -27,18 +27,40 @@ public sealed class CurrencyStoreScRefreshStoreMessage : NetMessage
 
     public override void ReadFromBuffer(NetIncomingMessage buffer, IRobustSerializer serializer)
     {
-        var length = buffer.ReadVariableInt32();
-        using var stream = new MemoryStream();
-        buffer.ReadAlignedMemory(stream, length);
-        serializer.DeserializeDirect(stream, out UpdatedItems);
+        // Read updated items
+        UpdatedItems = [];
+        var count = buffer.ReadVariableInt32();
+        for (int i = 0; i < count; i++)
+        {
+            // Read proto
+            var proto = buffer.ReadString();
+
+            // Read data
+            var length = buffer.ReadVariableInt32();
+            using var stream = new MemoryStream();
+            buffer.ReadAlignedMemory(stream, length);
+            serializer.DeserializeDirect(stream, out CurrencyStoreItemData data);
+
+            // Add to dictionary
+            UpdatedItems.Add(proto, data);
+        }
     }
 
     public override void WriteToBuffer(NetOutgoingMessage buffer, IRobustSerializer serializer)
     {
-        using var stream = new MemoryStream();
-        serializer.SerializeDirect(stream, UpdatedItems);
-        buffer.WriteVariableInt32((int) stream.Length);
-        stream.TryGetBuffer(out var segment);
-        buffer.Write(segment);
+        // Write updated items
+        buffer.WriteVariableInt32(UpdatedItems.Count);
+        foreach (var pair in UpdatedItems)
+        {
+            // Serialize prototype
+            buffer.Write(pair.Key);
+
+            // Serialize data
+            using var stream = new MemoryStream();
+            serializer.SerializeDirect(stream, pair.Value);
+            buffer.WriteVariableInt32((int) stream.Length);
+            stream.TryGetBuffer(out var segment);
+            buffer.Write(segment);
+        }
     }
 }

@@ -23,15 +23,15 @@ public sealed class CurrencyStoreCsRequestTransferMessage : NetMessage
     public int Id;
 
     /// <summary>
-    ///     The user id of the user to transfer the item to.
+    ///     The username of the user to transfer the item to.
     /// </summary>
-    public NetUserId Target;
+    public string Target = default!;
 
     public override void ReadFromBuffer(NetIncomingMessage buffer, IRobustSerializer serializer)
     {
         Type = (TransferType) buffer.ReadByte();
         Id = buffer.ReadVariableInt32();
-        Target = new NetUserId(buffer.ReadGuid());
+        Target = buffer.ReadString();
     }
 
     public override void WriteToBuffer(NetOutgoingMessage buffer, IRobustSerializer serializer)

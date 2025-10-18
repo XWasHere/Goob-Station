@@ -325,6 +325,16 @@ public sealed partial class GoobCVars
 
     #endregion
 
+    #region Currency Store
+
+    /// <summary>
+    ///     Whether or not to allow players to transfer pending immediately activated items.
+    /// </summary>
+    public static readonly CVarDef<bool> CurrencyStoreAllowTransferImmediate =
+        CVarDef.Create("currencystore.allow_transfer_immediate", false, CVar.SERVERONLY);
+
+    #endregion
+
     #region Station Events
 
     /// <summary>

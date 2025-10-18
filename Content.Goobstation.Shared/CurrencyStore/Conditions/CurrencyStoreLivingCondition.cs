@@ -1,4 +1,7 @@
 using Content.Shared.Ghost;
+using Content.Shared.Mind;
+using Robust.Shared.Network;
+using Robust.Shared.Player;
 
 namespace Content.Goobstation.Shared.CurrencyStore.Conditions;
 
@@ -6,9 +9,17 @@ public sealed partial class CurrencyStoreLivingCondition : CurrencyStoreConditio
 {
     public override CurrencyStoreRoundState AllowedRoundState => CurrencyStoreRoundState.InRound;
 
-    public override bool EvaluateCondition(EntityUid player, IEntityManager entityManager)
+    public override bool EvaluateCondition(NetUserId player, EntityManager entityManager)
     {
-        return !entityManager.HasComponent<GhostComponent>(player);
+        var playerManager = IoCManager.Resolve<ISharedPlayerManager>();
+
+        // Get player
+        var playerEnt = playerManager.GetSessionById(player).AttachedEntity;
+        if (playerEnt == null)
+            return false;
+
+        // Return true if player is not a ghost.
+        return !entityManager.HasComponent<GhostComponent>(playerEnt.Value);
     }
 
     public override string GetLocalizedDescription()
