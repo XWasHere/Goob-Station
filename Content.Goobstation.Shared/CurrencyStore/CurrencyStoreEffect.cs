@@ -31,5 +31,5 @@ public abstract partial class CurrencyStoreEffect
     ///     Executes the effect.
     /// </summary>
     /// <param name="player">The player user id</param>
-    public abstract void ExecuteEffect(NetUserId player, EntityManager entityManager);
+    public abstract void ExecuteEffect(NetUserId player, IEntityManager entityManager);
 }

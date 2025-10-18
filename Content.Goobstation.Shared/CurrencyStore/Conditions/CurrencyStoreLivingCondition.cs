@@ -9,7 +9,7 @@ public sealed partial class CurrencyStoreLivingCondition : CurrencyStoreConditio
 {
     public override CurrencyStoreRoundState AllowedRoundState => CurrencyStoreRoundState.InRound;
 
-    public override bool EvaluateCondition(NetUserId player, EntityManager entityManager)
+    public override bool EvaluateCondition(NetUserId player, IEntityManager entityManager)
     {
         var playerManager = IoCManager.Resolve<ISharedPlayerManager>();
 

@@ -19,7 +19,7 @@ public abstract partial class CurrencyStoreCondition
     /// </summary>
     /// <param name="player">The player user id</param>
     /// <returns>If the condition passes</returns>
-    public abstract bool EvaluateCondition(NetUserId player, EntityManager entityManager);
+    public abstract bool EvaluateCondition(NetUserId player, IEntityManager entityManager);
 
     /// <summary>
     ///     Get the description of the condition that is displayed to the user. If a condition fails,

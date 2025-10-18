@@ -14,7 +14,7 @@ public sealed partial class CurrencyStoreGiveItemEffect : CurrencyStoreEffect
 
     public override CurrencyStoreRoundState AllowedRoundState => CurrencyStoreRoundState.InRound;
 
-    public override void ExecuteEffect(NetUserId player, EntityManager entityManager)
+    public override void ExecuteEffect(NetUserId player, IEntityManager entityManager)
     {
         var playerManager = IoCManager.Resolve<IPlayerManager>();
 
