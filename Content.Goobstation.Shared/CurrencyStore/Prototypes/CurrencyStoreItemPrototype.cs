@@ -76,7 +76,7 @@ public sealed partial class CurrencyStoreItemPrototype : CurrencyStoreBaseItemPr
     ///     Conditions evaluated before activating an item. If any condition fails, the item will not be used.
     /// </summary>
     [DataField(customTypeSerializer: typeof(OptionalAbstractTypeSerializer<CurrencyStoreCondition>))]
-    public CurrencyStoreCondition[] Conditions = default!;
+    public CurrencyStoreCondition[] Conditions = [];
 
     /// <summary>
     ///     Effects executed after activating an item.
