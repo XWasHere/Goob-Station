@@ -36,10 +36,10 @@ public sealed class CurrencyStoreScRefreshStoreMessage : NetMessage
             var proto = buffer.ReadString();
 
             // Read data
-            var length = buffer.ReadVariableInt32();
-            using var stream = new MemoryStream();
-            buffer.ReadAlignedMemory(stream, length);
-            serializer.DeserializeDirect(stream, out CurrencyStoreItemData data);
+            var data = new CurrencyStoreItemData
+            {
+                Price = buffer.ReadInt32(),
+            };
 
             // Add to dictionary
             UpdatedItems.Add(proto, data);
@@ -56,11 +56,7 @@ public sealed class CurrencyStoreScRefreshStoreMessage : NetMessage
             buffer.Write(pair.Key);
 
             // Serialize data
-            using var stream = new MemoryStream();
-            serializer.SerializeDirect(stream, pair.Value);
-            buffer.WriteVariableInt32((int) stream.Length);
-            stream.TryGetBuffer(out var segment);
-            buffer.Write(segment);
+            buffer.Write(pair.Value.Price);
         }
     }
 }

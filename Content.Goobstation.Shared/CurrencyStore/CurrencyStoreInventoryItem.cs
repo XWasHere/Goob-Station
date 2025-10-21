@@ -8,6 +8,7 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 /// <summary>
 ///     Class representing a single owned item in a player's inventory.
 /// </summary>
+/// <seealso cref="Messages.CurrencyStoreScRefreshMessage"/>
 [Serializable, NetSerializable]
 public sealed class CurrencyStoreInventoryItem
 {

@@ -8,6 +8,7 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 /// <summary>
 ///     Structure representing a single owned voucher.
 /// </summary>
+/// <seealso cref="Messages.CurrencyStoreScRefreshMessage"/>
 [Serializable, NetSerializable]
 public sealed class CurrencyStoreVoucher
 {

@@ -40,10 +40,14 @@ public sealed class CurrencyStoreScRefreshMessage : NetMessage
             Inventory = [];
             for (var i = 0; i < inventoryLength; i++)
             {
-                using var stream = new MemoryStream(inventoryLength);
-                buffer.ReadAlignedMemory(stream, inventoryLength);
-                serializer.DeserializeDirect(stream, out CurrencyStoreInventoryItem data);
-                Inventory.Add(data);
+                Inventory.Add(new CurrencyStoreInventoryItem
+                {
+                    Id = buffer.ReadInt32(),
+                    Owner = new NetUserId(buffer.ReadGuid()),
+                    Prototype = buffer.ReadString(),
+                    Immediate = buffer.ReadBoolean(),
+                    UsesLeft = buffer.ReadInt32(),
+                });
             }
         }
 
@@ -54,10 +58,13 @@ public sealed class CurrencyStoreScRefreshMessage : NetMessage
             Vouchers = [];
             for (var i = 0; i < vouchersLength; i++)
             {
-                using var stream = new MemoryStream(vouchersLength);
-                buffer.ReadAlignedMemory(stream, vouchersLength);
-                serializer.DeserializeDirect(stream, out CurrencyStoreVoucher data);
-                Vouchers.Add(data);
+                Vouchers.Add(new CurrencyStoreVoucher
+                {
+                    Id = buffer.ReadInt32(),
+                    Owner = new NetUserId(buffer.ReadGuid()),
+                    Prototype = buffer.ReadString(),
+                    UsesLeft = buffer.ReadInt32(),
+                });
             }
         }
 
@@ -79,22 +86,21 @@ public sealed class CurrencyStoreScRefreshMessage : NetMessage
         buffer.WriteVariableInt32(Inventory?.Count ?? -1);
         foreach (var item in Inventory ?? [])
         {
-            using var stream = new MemoryStream();
-            serializer.SerializeDirect(stream, item);
-            buffer.WriteVariableInt32((int) stream.Length);
-            stream.TryGetBuffer(out var segment);
-            buffer.Write(segment);
+            buffer.Write(item.Id);
+            buffer.Write(item.Owner);
+            buffer.Write(item.Prototype);
+            buffer.Write(item.Immediate);
+            buffer.Write(item.UsesLeft);
         }
 
         // Write vouchers
         buffer.WriteVariableInt32(Vouchers?.Count ?? -1);
         foreach (var item in Vouchers ?? [])
         {
-            using var stream = new MemoryStream();
-            serializer.SerializeDirect(stream, item);
-            buffer.WriteVariableInt32((int) stream.Length);
-            stream.TryGetBuffer(out var segment);
-            buffer.Write(segment);
+            buffer.Write(item.Id);
+            buffer.Write(item.Owner);
+            buffer.Write(item.Prototype);
+            buffer.Write(item.UsesLeft);
         }
 
         // Write permanent items

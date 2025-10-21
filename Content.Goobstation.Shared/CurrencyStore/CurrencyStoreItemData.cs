@@ -7,6 +7,7 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 /// <summary>
 ///     All dynamic data for a store item.
 /// </summary>
+/// <seealso cref="Messages.CurrencyStoreCsRequestPurchaseMessage"/>
 [Serializable, NetSerializable]
 public sealed class CurrencyStoreItemData
 {
