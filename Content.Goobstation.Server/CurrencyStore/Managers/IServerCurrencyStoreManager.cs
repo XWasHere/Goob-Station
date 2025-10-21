@@ -28,6 +28,7 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     /// <summary>
     ///     Add an item to a player's inventory
     /// </summary>
+    /// <remarks>If you change this, don't forget to update CurrencyStoreCommand::GiveItem</remarks>
     /// <param name="uid">The player's user id</param>
     /// <param name="item">The item prototype</param>
     /// <param name="immediate">Should the item be activated immediately</param>

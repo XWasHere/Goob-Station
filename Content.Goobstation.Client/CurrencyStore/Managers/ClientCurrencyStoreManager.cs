@@ -40,6 +40,10 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
     private void OnRefresh(CurrencyStoreScRefreshMessage message)
     {
         _sawmill.Debug("got player refresh from server");
+        foreach (var item in message.Inventory ?? [])
+        {
+            _sawmill.Debug($"Got item data [{item.Id} {item.Prototype} {item.UsesLeft} {item.Immediate}]");
+        }
     }
 
     private void OnRefreshStore(CurrencyStoreScRefreshStoreMessage message)

@@ -19,7 +19,9 @@ namespace Content.Goobstation.Server.CurrencyStore.Managers;
 ///     Manages all non-activation related store functionality.
 /// </summary>
 /// <remarks>
-///     There is no async code here. All database code blocks the main thread. God help us all.
+///     Abandon all hope, ye who enter here.
+///
+///     TODO: Some of this could probably be async-ified. We block the main thread a lot.
 /// </remarks>
 /// <seealso cref="Systems.ServerCurrencyStoreSystem"/>
 public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
@@ -29,7 +31,6 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     [Dependency] private readonly ICommonCurrencyManager _currency = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IServerNetManager _net = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly ISharedPlayerManager _player = default!;
 
@@ -387,6 +388,31 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         _net.ServerSendToAll(message);
     }
 
+    /// <summary>
+    ///     Send updated player data to a client if it is online
+    /// </summary>
+    /// <param name="player">The player to notify</param>
+    /// <param name="items">Send items</param>
+    /// <param name="vouchers">Send vouchers</param>
+    /// <param name="permanent">Send permanent items</param>
+    private void SendUpdatedPlayerData(NetUserId player, bool items, bool vouchers, bool permanent)
+    {
+        if (!_player.TryGetSessionById(player, out var session))
+            return;
+
+        if (!_cachedPlayerData.TryGetValue(player, out var cache))
+            return;
+
+        var message = new CurrencyStoreScRefreshMessage
+        {
+            Inventory = items ? cache.Inventory.Values.ToList() : null,
+            Vouchers = vouchers ? cache.Vouchers.Values.ToList() : null,
+            PermanentItems = permanent ? cache.PermanentItems.ToList() : null,
+        };
+
+        _net.ServerSendMessage(message, session.Channel);
+    }
+
     #endregion
 
     #region Items
@@ -415,19 +441,13 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         // Give the player the item
         var item = AddPlayerInventoryItem(uid, proto, proto.Immediate, proto.MaxUses);
 
-        // Send item added event
+        // Send item added event, ServerCurrencyStoreSystem will handle immediate activation.
         ItemAdded?.Invoke(item, ItemModificationReason.Purchase, uid);
 
         // Update dynamic price
         ModifyItemPrice(proto, proto.PriceIncrease, true);
 
-        // If the item is immediate, try to activate it.
-        // It's ok if we fail to activate. The item was purchased, that means we were successful
-        // TODO: Fire an event that CurrencyStoreSystem can use instead.
-        //if (proto.Immediate)
-        //    TryActivateItemInternal(uid, item, proto, out _);
-
-        // Item was redeemed successfully
+        // Item was purchased successfully
         return true;
     }
 
@@ -493,13 +513,11 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         if (item.Owner == to)
             return true;
 
-        // Send item removed event
-        ItemRemoved?.Invoke(item, ItemModificationReason.Transfer, prev);
-
         // Transfer the item
         SetPlayerItemOwner(item, to);
 
-        // Send item added event
+        // Send item added and removed event
+        ItemRemoved?.Invoke(item, ItemModificationReason.Transfer, prev);
         ItemAdded?.Invoke(item, ItemModificationReason.Transfer, prev);
 
         return true;
@@ -598,11 +616,16 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         int maxUses)
     {
         // Add a new item to the database
-        var record = TrackPending(Task.Run(() => _db.AddPlayerInventoryItem(uid, item, immediate, maxUses))).GetAwaiter().GetResult();
+        var task = Task.Run(() => _db.AddPlayerInventoryItem(uid, item, immediate, maxUses));
+        TrackPending(task);
+        var record = task.GetAwaiter().GetResult();
 
         // Update cache if player is connected
         if (_cachedPlayerData.TryGetValue(uid, out var data))
             data.Inventory.Add(record.Id, record);
+
+        // Send updated inventory to player
+        SendUpdatedPlayerData(uid, true, false, false);
 
         // Return item
         return record;
@@ -616,7 +639,9 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     private void SetPlayerInventoryItemUses(CurrencyStoreInventoryItem item, int uses)
     {
         // Update database
-        TrackPending(Task.Run(() => _db.SetPlayerInventoryItemUses(item.Id, uses))).GetAwaiter().GetResult();
+        var task = Task.Run(() => _db.SetPlayerInventoryItemUses(item.Id, uses));
+        TrackPending(task);
+        task.GetAwaiter().GetResult();
 
         // Update uses on item
         item.UsesLeft = uses;
@@ -625,6 +650,9 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         if (_cachedPlayerData.TryGetValue(item.Owner, out var data)
             && data.Inventory.TryGetValue(item.Id, out var cachedItem))
             cachedItem.UsesLeft = uses;
+
+        // Send updated inventory to player
+        SendUpdatedPlayerData(item.Owner, true, false, false);
     }
 
     /// <summary>
@@ -635,18 +663,25 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     private void SetPlayerItemOwner(CurrencyStoreInventoryItem item, NetUserId owner)
     {
         // Update database
-        TrackPending(Task.Run(() => _db.SetPlayerItemOwner(item.Id, owner))).GetAwaiter().GetResult();
+        var task = Task.Run(() => _db.SetPlayerItemOwner(item.Id, owner));
+        TrackPending(task);
+        task.GetAwaiter().GetResult();
 
-        // Update cache if original item owner is connected
+        // Update cache if players are connected
         if (_cachedPlayerData.TryGetValue(item.Owner, out var oldData))
             oldData.Inventory.Remove(item.Id);
 
-        // Update cache if new item owner is connected
         if (_cachedPlayerData.TryGetValue(owner, out var newData))
             newData.Inventory.Add(item.Id, item);
 
+        // Send previous player updated inventory
+        SendUpdatedPlayerData(item.Owner, true, false, false);
+
         // Update item
         item.Owner = owner;
+
+        // Send new owner updated inventory
+        SendUpdatedPlayerData(item.Owner, true, false, false);
     }
 
     /// <summary>
@@ -656,11 +691,16 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     private void RemovePlayerInventoryItem(CurrencyStoreInventoryItem item)
     {
         // Update database
-        TrackPending(Task.Run(() => _db.DeletePlayerInventoryItem(item.Id))).GetAwaiter().GetResult();
+        var task = Task.Run(() => _db.DeletePlayerInventoryItem(item.Id));
+        TrackPending(task);
+        task.GetAwaiter().GetResult();
 
         // Update cache if player is connected
         if (_cachedPlayerData.TryGetValue(item.Owner, out var data))
             data.Inventory.Remove(item.Id);
+
+        // Send updated player inventory
+        SendUpdatedPlayerData(item.Owner, true, false, false);
     }
 
     #endregion
@@ -803,7 +843,9 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         data.Price = price;
 
         // Update price in database
-        TrackPending(Task.Run(() => _db.UpdateItemData(item, price))).GetAwaiter().GetResult();
+        var task = Task.Run(() => _db.UpdateItemData(item, price));
+        TrackPending(task);
+        task.GetAwaiter().GetResult();
         MarkItemDataUpdated(item);
 
         // Notify clients
@@ -836,7 +878,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     /// <summary>
     ///     Track a database save task to make sure we block server shutdown on it.
     /// </summary>
-    private async Task TrackPending(Task task)
+    private async void TrackPending(Task task)
     {
         _pendingSaveTasks.Add(task);
 
@@ -853,22 +895,18 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     /// <summary>
     ///     Track a database save task to make sure we block server shutdown on it.
     /// </summary>
-    private async Task<TResult> TrackPending<TResult>(Task<TResult> task)
+    private async void TrackPending<TResult>(Task<TResult> task)
     {
-        TResult result;
-
         _pendingSaveTasks.Add(task);
 
         try
         {
-            result = await task;
+            await task;
         }
         finally
         {
             _pendingSaveTasks.Remove(task);
         }
-
-        return result;
     }
 
     #endregion

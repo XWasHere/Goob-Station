@@ -3,32 +3,46 @@ using Content.Goobstation.Server.CurrencyStore.Managers;
 using Content.Goobstation.Shared.CurrencyStore;
 using Content.Goobstation.Shared.CurrencyStore.Prototypes;
 using Content.Goobstation.Shared.CurrencyStore.Systems;
+using Content.Server.Chat.Managers;
+using Content.Server.Chat.Systems;
 using Content.Server.GameTicking;
 using Content.Server.Popups;
+using Content.Shared.Chat;
 using Content.Shared.Popups;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Goobstation.Server.CurrencyStore.Systems;
 
 /// <summary>
 ///     Manages all simulation-side store functionality
 /// </summary>
+/// <remarks>
+///     TODO(XWH): ProcessItemAdded and ProcessItemRemoved need to handle immediate items.
+/// </remarks>
 /// <seealso cref="Managers.ServerCurrencyStoreManager"/>
 public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 {
     [Dependency] private readonly IServerCurrencyStoreManager _manager = default!;
     [Dependency] private readonly ISharedPlayerManager _player = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly IChatManager _chat = default!;
     [Dependency] private readonly GameTicker _ticker = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
 
     /// <summary>
     ///     Events received from ServerCurrencyStoreManager, safe to interact with from ECS.
     /// </summary>
+    /// <remarks>
+    ///     Subscribing to manager events is icky, but this works for now.
+    ///
+    ///     NOTE(XWH): I highly doubt this needs a lock, though in the future I would like
+    ///                to async-ify some of the manager code, and I want it to be thread-safe.
+    /// </remarks>
     private Queue<(bool, object, ItemModificationReason, NetUserId?)> _itemChangesMailbox = [];
-    private readonly object _itemChangesMailboxLock = new(); // NOTE(XWH): I highly doubt this needs a lock.
+    private readonly object _itemChangesMailboxLock = new();
 
     #region Lifecycle
 
@@ -81,6 +95,22 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
     #endregion
 
+    #region Public Interface
+
+    public bool TryActivateItem(CurrencyStoreInventoryItem item, out string result)
+    {
+        if (!_proto.TryIndex(item.Prototype, out var proto))
+        {
+            // TODO(XWH): Localization
+            result = "Invalid prototype";
+            return false;
+        }
+
+        return TryActivateItemInternal(item.Owner, item, proto, out result);
+    }
+
+    #endregion
+
     #region StoreManager Event Handling
 
     private void OnManagerItemAdded(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor)
@@ -120,13 +150,40 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
             ItemModificationReason.Admin or ItemModificationReason.Transfer => $"You got a {localizedItem} from {actorName}",
             ItemModificationReason.Purchase => $"Purchased {localizedItem}",
             ItemModificationReason.Activation or ItemModificationReason.Other => $"You got a {localizedItem}",
+            {} => $"ITEM ADDED [{localizedItem} {actorName} {reason}] YOU SHOULD NEVER SEE THIS"
         };
 
-        _popup.PopupClient(message, owner.AttachedEntity!.Value, owner.AttachedEntity!.Value, PopupType.Medium);
+        NotifyUser(item.Owner, message);
     }
 
-    // And god taketh away
-    private void ProcessItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor) {}
+    private void ProcessItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actorUid)
+    {
+        // Get prototype
+        if (!_proto.TryIndex(item.Prototype, out var proto))
+            return;
+
+        // Get owner if online, otherwise forget about it
+        if (!_player.TryGetSessionById(item.Owner, out var owner))
+            return;
+
+        var localizedItem = Loc.GetString(proto.Name);
+        var actorName = _player.TryGetSessionById(actorUid, out var actor)
+            ? actor.Name
+            : "an unknown user"; // TODO(XWH): Localization
+
+        // TODO(XWH): Localization
+        var message = reason switch
+        {
+            ItemModificationReason.Admin => $"Your {localizedItem} was removed by {actorName}",
+            ItemModificationReason.Other => $"Your {localizedItem} was removed",
+            ItemModificationReason.Activation => null, // Activation notifications are handled separately
+            ItemModificationReason.Transfer => $"Your {localizedItem} was transferred to {owner.Name}", // Owner is changed before we get this event.
+            { } => $"ITEM REMOVED [{localizedItem} {actorName} {reason}] YOU SHOULD NEVER SEE THIS"
+        };
+
+        if (message != null) // When an item is transferred, it's owner is changed prior to us receiving the event.
+            NotifyUser(reason == ItemModificationReason.Transfer ? actor?.UserId ?? item.Owner : item.Owner, message);
+    }
 
     #endregion
 
@@ -167,6 +224,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         return true;
     }
 
+    // TODO(XWH): Localize
     /// <summary>
     ///     Check if an item can be used. This includes executing its conditions.
     /// </summary>
@@ -181,6 +239,13 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         out string result)
     {
         result = "";
+
+        // Check that the owner is online
+        if (!_player.ValidSessionId(uid))
+        {
+            result = "Player is offline.";
+            return false;
+        }
 
         // Check game state
         switch (proto.Redeemable)
@@ -241,6 +306,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         {
             if (!condition.EvaluateCondition(uid, EntityManager))
             {
+                // TODO(XWH): Localization
                 result = $"You can not activate this item right now: {condition.GetLocalizedDescription()}";
                 return false;
             }
@@ -266,6 +332,27 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         foreach (var effect in proto.Effects)
         {
             effect.ExecuteEffect(uid, EntityManager);
+        }
+    }
+
+    #endregion
+
+    #region Utility
+
+    private void NotifyUser(NetUserId user, string message)
+    {
+        if (!_player.TryGetSessionById(user, out var session))
+            return;
+
+        // Popup for the player
+        if (session.AttachedEntity.HasValue)
+        {
+            _popup.PopupEntity(message, session.AttachedEntity.Value, session.AttachedEntity.Value, PopupType.Medium);
+        }
+        else
+        {
+            var wrapped = Loc.GetString("chat-manager-server-wrap-message", ("message", FormattedMessage.EscapeText(message)));
+            _chat.ChatMessageToOne(ChatChannel.Server, message, wrapped, EntityUid.Invalid, false, session.Channel);
         }
     }
 
