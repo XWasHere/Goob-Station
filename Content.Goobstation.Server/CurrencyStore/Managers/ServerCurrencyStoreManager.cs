@@ -33,6 +33,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     [Dependency] private readonly IServerNetManager _net = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly ISharedPlayerManager _player = default!;
+    [Dependency] private readonly ILocalizationManager _loc = default!;
 
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemAdded;
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemRemoved;
@@ -242,7 +243,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         // Get item prototype
         if (!_proto.TryIndex(message.Item, out var prototype, false))
         {
-            NetFailGeneric(message.MsgChannel, "Invalid item prototype.");
+            NetFailGeneric(message.MsgChannel, _loc.GetString("currencystore-error-invalidprototype"));
             return;
         }
 
@@ -257,7 +258,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         // Get target user
         if (!_player.TryGetUserId(message.Target, out var targetUid))
         {
-            NetFailGeneric(message.MsgChannel, "Unable to find target player (are they online?)");
+            NetFailGeneric(message.MsgChannel, _loc.GetString("currencystore-error-offline"));
             return;
         }
 
@@ -270,14 +271,14 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
                 var item = GetPlayerInventoryItem(message.Id);
                 if (item == null || item.Owner != message.MsgChannel.UserId)
                 {
-                    NetFailGeneric(message.MsgChannel, "You do not own this item.");
+                    NetFailGeneric(message.MsgChannel, _loc.GetString("currencystore-error-notowned"));
                     return;
                 }
 
                 // Block immediate items if the server is configured to prevent doing that
                 if (item.Immediate && !_cfg.GetCVar(GoobCVars.CurrencyStoreAllowTransferImmediate))
                 {
-                    NetFailGeneric(message.MsgChannel, "Server does not allow transferring items pending activation.");
+                    NetFailGeneric(message.MsgChannel, _loc.GetString("currencystore-error-noimmediate"));
                     return;
                 }
 
@@ -470,14 +471,14 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         // If we are purchasing a permanent item, make sure the player doesn't already own it.
         if (proto.Permanent && GetPlayerPermanentItemOwnership(uid, proto, false))
         {
-            result = "You already own this item";
+            result = _loc.GetString("currencystore-error-alreadyowned");
             return -1;
         }
 
         // Check that the item isn't in a hidden category
         if (!_proto.TryIndex(proto.Category, out var category, true) || !category.InStore)
         {
-            result = "Cannot purchase from hidden categories";
+            result = _loc.GetString("currencystore-error-hidden");
             return -1;
         }
 
@@ -485,7 +486,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         var newBalance = GetBalanceAfterPurchase(uid, proto);
         if (newBalance < 0)
         {
-            result = "You cannot afford this item";
+            result = _loc.GetString("currencystore-error-broke");
             return -1;
         }
 

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Threading;
 using Content.Goobstation.Server.CurrencyStore.Managers;
 using Content.Goobstation.Shared.CurrencyStore;
@@ -43,6 +44,18 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     /// </remarks>
     private Queue<(bool, object, ItemModificationReason, NetUserId?)> _itemChangesMailbox = [];
     private readonly object _itemChangesMailboxLock = new();
+
+    #region Localization Dictionaries
+
+    private readonly Dictionary<ItemModificationReason, string> _eventTypesToLocType = new()
+    {
+        { ItemModificationReason.Admin, "admin" },
+        { ItemModificationReason.Purchase, "purchase" },
+        { ItemModificationReason.Transfer, "transfer" },
+        { ItemModificationReason.Other, "generic" }
+    };
+
+    #endregion
 
     #region Lifecycle
 
@@ -97,12 +110,17 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
     #region Public Interface
 
+    /// <summary>
+    ///     Try activating an item.
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="result"></param>
+    /// <returns></returns>
     public bool TryActivateItem(CurrencyStoreInventoryItem item, out string result)
     {
         if (!_proto.TryIndex(item.Prototype, out var proto))
         {
-            // TODO(XWH): Localization
-            result = "Invalid prototype";
+            result = Loc.GetString("currencystore-error-prototype");
             return false;
         }
 
@@ -139,21 +157,16 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         if (!_player.TryGetSessionById(item.Owner, out var owner))
             return;
 
-        var localizedItem = Loc.GetString(proto.Name);
-        var actorName = _player.TryGetSessionById(actorUid, out var actor)
-            ? actor.Name
-            : "an unknown user."; // TODO(XWH): Localization
+        // We don't need to care about who the actor is, if we can't find them, display a placeholder name.
+        _player.TryGetSessionById(actorUid, out var actor);
 
-        // TODO(XWH): Localization
-        var message = reason switch
-        {
-            ItemModificationReason.Admin or ItemModificationReason.Transfer => $"You got a {localizedItem} from {actorName}",
-            ItemModificationReason.Purchase => $"Purchased {localizedItem}",
-            ItemModificationReason.Activation or ItemModificationReason.Other => $"You got a {localizedItem}",
-            {} => $"ITEM ADDED [{localizedItem} {actorName} {reason}] YOU SHOULD NEVER SEE THIS"
-        };
-
-        NotifyUser(item.Owner, message);
+        if (_eventTypesToLocType.TryGetValue(reason, out var reasonString) &&
+            Loc.TryGetString($"currencystore-event-item-add-{reasonString}", out var message,
+                ("item", Loc.GetString(proto.Name)),
+                ("actor", GetLocalizedPlayerName(actor)),
+                ("owner", GetLocalizedPlayerName(owner)),
+                ("reason", (int) reason)))
+            NotifyUser(item.Owner, message);
     }
 
     private void ProcessItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actorUid)
@@ -166,22 +179,16 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         if (!_player.TryGetSessionById(item.Owner, out var owner))
             return;
 
-        var localizedItem = Loc.GetString(proto.Name);
-        var actorName = _player.TryGetSessionById(actorUid, out var actor)
-            ? actor.Name
-            : "an unknown user"; // TODO(XWH): Localization
+        // We don't need to care about who the actor is, if we can't find them, display a placeholder name.
+        _player.TryGetSessionById(actorUid, out var actor);
 
-        // TODO(XWH): Localization
-        var message = reason switch
-        {
-            ItemModificationReason.Admin => $"Your {localizedItem} was removed by {actorName}",
-            ItemModificationReason.Other => $"Your {localizedItem} was removed",
-            ItemModificationReason.Activation => null, // Activation notifications are handled separately
-            ItemModificationReason.Transfer => $"Your {localizedItem} was transferred to {owner.Name}", // Owner is changed before we get this event.
-            { } => $"ITEM REMOVED [{localizedItem} {actorName} {reason}] YOU SHOULD NEVER SEE THIS"
-        };
-
-        if (message != null) // When an item is transferred, it's owner is changed prior to us receiving the event.
+        if (_eventTypesToLocType.TryGetValue(reason, out var reasonString) &&
+            Loc.TryGetString($"currencystore-event-item-remove-{reasonString}", out var message,
+                ("item", Loc.GetString(proto.Name)),
+                ("actor", GetLocalizedPlayerName(actor)),
+                ("owner", GetLocalizedPlayerName(owner)),
+                ("reason", (int) reason)))
+            // When an item is transferred, it's owner is changed prior to us receiving the event.
             NotifyUser(reason == ItemModificationReason.Transfer ? actor?.UserId ?? item.Owner : item.Owner, message);
     }
 
@@ -190,7 +197,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     #region Item Activation
 
     /// <summary>
-    ///     Try activating an item
+    ///     Try activating an item.
     /// </summary>
     /// <param name="uid">The user ID</param>
     /// <param name="item">The item</param>
@@ -224,7 +231,6 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         return true;
     }
 
-    // TODO(XWH): Localize
     /// <summary>
     ///     Check if an item can be used. This includes executing its conditions.
     /// </summary>
@@ -243,7 +249,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         // Check that the owner is online
         if (!_player.ValidSessionId(uid))
         {
-            result = "Player is offline.";
+            result = Loc.GetString("currencystore-error-offline");
             return false;
         }
 
@@ -255,7 +261,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
             {
                 if (_ticker.RunLevel != GameRunLevel.PreRoundLobby)
                 {
-                    result = "You can not use this item right now.";
+                    result = Loc.GetString("currencystore-error-roundstate");
                     return false;
                 }
 
@@ -266,7 +272,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
             {
                 if (_ticker.RunLevel != GameRunLevel.InRound || !_ticker.UserHasJoinedGame(uid))
                 {
-                    result = "You can not use this item right now.";
+                    result = Loc.GetString("currencystore-error-roundstate");
                     return false;
                 }
 
@@ -306,8 +312,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         {
             if (!condition.EvaluateCondition(uid, EntityManager))
             {
-                // TODO(XWH): Localization
-                result = $"You can not activate this item right now: {condition.GetLocalizedDescription()}";
+                result = Loc.GetString("currencystore-error-condition", ("reason", condition.GetLocalizedDescription()));
                 return false;
             }
         }
@@ -339,6 +344,11 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
     #region Utility
 
+    /// <summary>
+    ///     Display a message to a player if they are ingame
+    /// </summary>
+    /// <param name="user">Player user id</param>
+    /// <param name="message">Message to display</param>
     private void NotifyUser(NetUserId user, string message)
     {
         if (!_player.TryGetSessionById(user, out var session))
@@ -351,9 +361,19 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         }
         else
         {
-            var wrapped = Loc.GetString("chat-manager-server-wrap-message", ("message", FormattedMessage.EscapeText(message)));
+            var wrapped = Loc.GetString("currencystore-chat-notification-message-wrap", ("message", message));
             _chat.ChatMessageToOne(ChatChannel.Server, message, wrapped, EntityUid.Invalid, false, session.Channel);
         }
+    }
+
+    /// <summary>
+    ///     Get the username of a player or a localized placeholder name.
+    /// </summary>
+    /// <param name="session">User session</param>
+    /// <returns>Localized name</returns>
+    private string GetLocalizedPlayerName(ICommonSession? session)
+    {
+        return session != null ? session.Name : Loc.GetString("currencystore-unknown-user");
     }
 
     #endregion
