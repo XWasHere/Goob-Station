@@ -8,6 +8,11 @@ command-description-voucher-remove = Removes the piped vouchers from their owner
 command-description-voucher-dump = Dump the piped vouchers to the console.
 command-description-voucher-inv = Get all vouchers in the piped player's inventory.
 
+command-description-permanentitem-add = Gives a permament item to the piped players.
+command-description-permanentitem-remove = Removes a permanent item from the piped players.
+command-description-permanentitem-dump = Dump the piped items to the console.
+command-description-permanentitem-inv = Get all permanent items in the piped player's inventory.
+
 command-description-currencystore-transfer = Transfers the piped objects to the specified player.
 command-description-currencystore-activate = Activates a token on it's owner.
 command-description-currencystore-redeem = Redeem a voucher for an item and give it to its owner.

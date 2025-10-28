@@ -42,7 +42,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     ///     NOTE(XWH): I highly doubt this needs a lock, though in the future I would like
     ///                to async-ify some of the manager code, and I want it to be thread-safe.
     /// </remarks>
-    private Queue<(bool, object, ItemModificationReason, NetUserId?)> _itemChangesMailbox = [];
+    private Queue<(bool, NetUserId, object, ItemModificationReason, NetUserId?)> _itemChangesMailbox = [];
     private readonly object _itemChangesMailboxLock = new();
 
     #region Localization Dictionaries
@@ -66,6 +66,8 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         _manager.ItemRemoved += OnManagerItemRemoved;
         _manager.VoucherAdded += OnManagerVoucherAdded;
         _manager.VoucherRemoved += OnManagerVoucherRemoved;
+        _manager.PermanentItemAdded += OnManagerPermanentItemAdded;
+        _manager.PermanentItemRemoved += OnManagerPermanentItemRemoved;
 
         base.Initialize();
     }
@@ -77,6 +79,8 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         _manager.ItemRemoved -= OnManagerItemRemoved;
         _manager.VoucherAdded -= OnManagerVoucherRemoved;
         _manager.VoucherRemoved -= OnManagerVoucherRemoved;
+        _manager.PermanentItemAdded += OnManagerPermanentItemAdded;
+        _manager.PermanentItemRemoved += OnManagerPermanentItemRemoved;
 
         base.Shutdown();
     }
@@ -89,11 +93,11 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         while (true)
         {
             // This is horrible.
-            (bool, object, ItemModificationReason, NetUserId?) data;
+            (bool, NetUserId, object, ItemModificationReason, NetUserId?) data;
             lock (_itemChangesMailboxLock)
                 if (!_itemChangesMailbox.TryDequeue(out data))
                     break;
-            var (added, item, reason, actor) = data;
+            var (added, owner, item, reason, actor) = data;
 
             // Run ECS-safe event handlers
             switch (item)
@@ -112,6 +116,14 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
                         ProcessVoucherAdded(voucher, reason, actor);
                     else
                         ProcessVoucherRemoved(voucher, reason, actor);
+                    break;
+                }
+                case ProtoId<CurrencyStoreItemPrototype> permanent:
+                {
+                    if (added)
+                        ProcessPermanentItemAdded(owner, permanent, reason, actor);
+                    else
+                        ProcessPermanentItemRemoved(owner, permanent, reason, actor);
                     break;
                 }
             }
@@ -146,25 +158,43 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     private void OnManagerItemAdded(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor)
     {
         lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((true, item, reason, actor));
+            _itemChangesMailbox.Enqueue((true, item.Owner, item, reason, actor));
     }
 
     private void OnManagerItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor)
     {
         lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((false, item, reason, actor));
+            _itemChangesMailbox.Enqueue((false, item.Owner, item, reason, actor));
     }
 
     private void OnManagerVoucherAdded(CurrencyStoreVoucher item, ItemModificationReason reason, NetUserId? actor)
     {
         lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((true, item, reason, actor));
+            _itemChangesMailbox.Enqueue((true, item.Owner, item, reason, actor));
     }
 
     private void OnManagerVoucherRemoved(CurrencyStoreVoucher item, ItemModificationReason reason, NetUserId? actor)
     {
         lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((false, item, reason, actor));
+            _itemChangesMailbox.Enqueue((false, item.Owner, item, reason, actor));
+    }
+
+    private void OnManagerPermanentItemAdded(NetUserId uid,
+        ProtoId<CurrencyStoreItemPrototype> item,
+        ItemModificationReason reason,
+        NetUserId? actor)
+    {
+        lock (_itemChangesMailboxLock)
+            _itemChangesMailbox.Enqueue((true, uid, item, reason, actor));
+    }
+
+    private void OnManagerPermanentItemRemoved(NetUserId uid,
+        ProtoId<CurrencyStoreItemPrototype> item,
+        ItemModificationReason reason,
+        NetUserId? actor)
+    {
+        lock (_itemChangesMailboxLock)
+            _itemChangesMailbox.Enqueue((false, uid, item, reason, actor));
     }
 
     #endregion
@@ -203,6 +233,28 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
             return;
 
         DisplayRemovedMessage("voucher", proto.Name, voucher.Owner, reason, actorUid);
+    }
+
+    private void ProcessPermanentItemAdded(NetUserId owner,
+        ProtoId<CurrencyStoreItemPrototype> protoId,
+        ItemModificationReason reason,
+        NetUserId? actorUid)
+    {
+        if (!_proto.TryIndex(protoId, out var proto))
+            return;
+
+        DisplayAddedMessage("permanent", proto.Name, owner, reason, actorUid);
+    }
+
+    private void ProcessPermanentItemRemoved(NetUserId owner,
+        ProtoId<CurrencyStoreItemPrototype> protoId,
+        ItemModificationReason reason,
+        NetUserId? actorUid)
+    {
+        if (!_proto.TryIndex(protoId, out var proto))
+            return;
+
+        DisplayRemovedMessage("permanent", proto.Name, owner, reason, actorUid);
     }
 
     private void DisplayAddedMessage(string locType,

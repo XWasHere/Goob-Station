@@ -9,6 +9,9 @@ namespace Content.Goobstation.Server.CurrencyStore.Managers;
 /// <summary>
 ///     Out-Of-Simulation currency store code.
 /// </summary>
+/// <remarks>
+///     All methods use cached values unless stated otherwise.
+/// </remarks>
 public interface IServerCurrencyStoreManager
 {
     #region Events
@@ -22,6 +25,16 @@ public interface IServerCurrencyStoreManager
     ///     Event fired when an item is removed from a player's inventory
     /// </summary>
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemRemoved;
+
+    /// <summary>
+    ///     Event fired when a permanent item is added to a player's inventory.
+    /// </summary>
+    public event Action<NetUserId, ProtoId<CurrencyStoreItemPrototype>, ItemModificationReason, NetUserId?>? PermanentItemAdded;
+
+    /// <summary>
+    ///     Event fired when a permanent item is removed from a player's inventory.
+    /// </summary>
+    public event Action<NetUserId, ProtoId<CurrencyStoreItemPrototype>, ItemModificationReason, NetUserId?>? PermanentItemRemoved;
 
     /// <summary>
     ///     Event fired when a voucher is added to a player's inventory
@@ -48,10 +61,10 @@ public interface IServerCurrencyStoreManager
     ///     Get the specified player's inventory.
     /// </summary>
     /// <param name="uid">The user id of the user to query. It is the caller's job to verify the uid is valid.</param>
-    public List<CurrencyStoreInventoryItem> GetInventory(NetUserId uid);
+    public List<CurrencyStoreInventoryItem> GetInventory(NetUserId uid, bool cache = true);
 
     /// <summary>
-    ///     Get an item by its database ID
+    ///     Get an item by its database ID. Does not use cached values.
     /// </summary>
     /// <param name="id">Item ID</param>
     /// <returns>The item, if it exists</returns>
@@ -116,28 +129,35 @@ public interface IServerCurrencyStoreManager
     ///     Gets a set of purchased permanent items.
     /// </summary>
     /// <param name="uid">The user id of the user to query</param>
-    public Task<HashSet<ProtoId<CurrencyStoreItemPrototype>>> GetPurchasedPermanentItems(NetUserId uid);
+    public HashSet<ProtoId<CurrencyStoreItemPrototype>> GetPurchasedPermanentItems(NetUserId uid, bool cache = true);
 
     /// <summary>
-    ///     Checks if a user has purchased a permanent item
+    ///     Checks if a user has purchased a permanent item.
     /// </summary>
+    /// <remarks>
+    ///     Checking permanent item ownerships uses cached values by default because unlike normal items,
+    ///     permanent items can be related to things like loadout items and traits. Without caching, this
+    ///     could lead to running over 100 database queries each time the round starts. Additionally,
+    ///     permanent items cannot be removed from a player's inventory without admin intervention, so it
+    ///     is safe to assume that it's value will not change once it's set.
+    /// </remarks>
     /// <param name="uid">The user id of the user to query</param>
     /// <param name="proto">The prototype id of the item to check</param>
-    public Task<bool> CheckPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto);
+    public bool CheckPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto, bool cache = true);
 
     /// <summary>
     ///     Marks that a user has purchased a permanent item.
     /// </summary>
     /// <param name="uid">The user to modify</param>
     /// <param name="proto">The prototype id of the purchased item</param>
-    public Task SetPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto);
+    public void SetPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto, ItemModificationReason reason, NetUserId? actor);
 
     /// <summary>
     ///     Marks that a user has not purchased a permanent item.
     /// </summary>
     /// <param name="uid">The user to modify</param>
     /// <param name="proto">The prototype id of the purchased item</param>
-    public Task ClearPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto);
+    public void ClearPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto, ItemModificationReason reason, NetUserId? actor);
 
     #endregion
 
@@ -147,10 +167,10 @@ public interface IServerCurrencyStoreManager
     ///     Gets a list of vouchers owned by a user.
     /// </summary>
     /// <param name="uid">The user to query</param>
-    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid);
+    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid, bool cache = true);
 
     /// <summary>
-    ///     Gets a voucher by its database ID
+    ///     Gets a voucher by its database ID. Does not use cached values
     /// </summary>
     /// <param name="id">Voucher ID</param>
     /// <returns>The voucher, if it exists</returns>

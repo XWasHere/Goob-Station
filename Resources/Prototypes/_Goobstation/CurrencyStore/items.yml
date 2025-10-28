@@ -33,3 +33,13 @@
   price: 500
   maxUses: 5
   effects: []
+
+# test that permanent items work correctly
+- type: currencyStoreItem
+  id: DebugPermanentExample
+  permanent: true
+  name: currencystore-item-permanent-example-name
+  description: currencystore-item-permanent-example-description
+  category: Debug
+  price: 1000
+  effects: []

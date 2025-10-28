@@ -2205,15 +2205,15 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             await using var db = await GetDb();
 
             return db.DbContext.GoobPlayerStoreItems
-                .Any(i => i.PlayerId == player.UserId && i.Prototype == prototype && i.ItemType == StoreItemType.Permanent);
+                .Any(i => i.PlayerId == player.UserId && i.Prototype == prototype.Id && i.ItemType == StoreItemType.Permanent);
         }
 
-        public async Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        public async Task<bool> AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
         {
             await using var db = await GetDb();
 
             if (await GetPermanentItemOwnership(player, prototype))
-                return;
+                return false;
 
             db.DbContext.GoobPlayerStoreItems.Add(new GoobPlayerStoreItem()
             {
@@ -2222,21 +2222,25 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
                 ItemType = StoreItemType.Permanent,
             });
             await db.DbContext.SaveChangesAsync();
+
+            return true;
         }
 
-        public async Task RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        public async Task<bool> RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
         {
             await using var db = await GetDb();
 
             var record = await db.DbContext.GoobPlayerStoreItems
-                .Where(i => i.PlayerId == player.UserId && i.Prototype == prototype && i.ItemType == StoreItemType.Permanent)
+                .Where(i => i.PlayerId == player.UserId && i.Prototype == prototype.Id && i.ItemType == StoreItemType.Permanent)
                 .FirstOrDefaultAsync();
 
             if (record == null)
-                return;
+                return false;
 
             db.DbContext.Remove(record);
             await db.DbContext.SaveChangesAsync();
+
+            return true;
         }
 
         public async Task<List<CurrencyStoreVoucher>> GetPlayerOwnedVouchers(NetUserId player)
@@ -2339,7 +2343,7 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             await using var db = await GetDb();
 
             var record = await db.DbContext.GoobStoreItemData
-                .Where(i => i.Prototype == proto)
+                .Where(i => i.Prototype == proto.Id)
                 .SingleOrDefaultAsync();
 
             return MakeItemData(record);
@@ -2350,7 +2354,7 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             await using var db = await GetDb();
 
             var record = await db.DbContext.GoobStoreItemData
-                .Where(i => i.Prototype == proto)
+                .Where(i => i.Prototype == proto.Id)
                 .SingleOrDefaultAsync();
 
             if (record == null)

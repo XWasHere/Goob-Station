@@ -16,7 +16,15 @@ currencystore-event-voucher-add-purchase = You purchased {INDEFINITE($item)} {$i
 currencystore-event-voucher-remove-generic = Your {$item} was removed.
 currencystore-event-voucher-remove-admin = Your {$item} was removed by {$actor}.
 currencystore-event-voucher-remove-transfer = Your {$item} was transferred to {$owner}
-currencystore-event-voucher-remove-purchase = You purchased {INDEFINITE($item)} {$item}, but due to a catastrophic bug, lost it instead.
+currencystore-event-voucher-remove-purchase = You purchased {INDEFINITE($item)} {$item}, but due to a catastrophic bug
+currencystore-event-permanent-add-generic = You got {INDEFINITE($item)} {$item}.
+currencystore-event-permanent-add-admin = You were given {INDEFINITE($item)} {$item} by {$actor}.
+currencystore-event-permanent-add-transfer = You were given {INDEFINITE($item)} {$item} by {$actor}.
+currencystore-event-permanent-add-purchase = You purchased {INDEFINITE($item)} {$item}.
+currencystore-event-permanent-remove-generic = Your {$item} was removed.
+currencystore-event-permanent-remove-admin = Your {$item} was removed by {$actor}.
+currencystore-event-permanent-remove-transfer = Your {$item} was transferred to {$owner}
+currencystore-event-permanent-remove-purchase = You purchased {INDEFINITE($item)} {$item}, but due to a catastrophic bug, lost it instead., lost it instead.
 
 # other errors
 currencystore-error-prototype = Invalid prototype

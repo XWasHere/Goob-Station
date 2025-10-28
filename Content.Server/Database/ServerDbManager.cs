@@ -496,7 +496,7 @@ namespace Content.Server.Database
         /// Get the permanent items purchased by the player.
         /// </summary>
         /// <param name="player">The user id of the player</param>
-        public Task<List<ProtoId<CurrencyStoreItemPrototype>>> GetPlayerOwnedPermanentItems(NetUserId player);
+        Task<List<ProtoId<CurrencyStoreItemPrototype>>> GetPlayerOwnedPermanentItems(NetUserId player);
 
         /// <summary>
         /// Check if a user has purchased a permanent item
@@ -510,14 +510,14 @@ namespace Content.Server.Database
         /// </summary>
         /// <param name="player">The user id of the player</param>
         /// <param name="prototype">The prototype id of the item</param>
-        Task RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
+        Task<bool> RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
 
         /// <summary>
         /// Add a permanent item record to a user
         /// </summary>
         /// <param name="player">The user id of the player</param>
         /// <param name="prototype">The prototype id of the item</param>
-        Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
+        Task<bool> AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype);
 
         /// <summary>
         /// Get all vouchers owned by a player
@@ -1441,13 +1441,13 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.GetPermanentItemOwnership(player, prototype));
         }
 
-        public Task AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        public Task<bool> AddPermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.AddPermanentItemOwnership(player, prototype));
         }
 
-        public Task RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
+        public Task<bool> RemovePermanentItemOwnership(NetUserId player, ProtoId<CurrencyStoreItemPrototype> prototype)
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.RemovePermanentItemOwnership(player, prototype));

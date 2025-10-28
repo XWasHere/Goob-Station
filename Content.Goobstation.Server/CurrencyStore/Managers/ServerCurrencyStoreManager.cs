@@ -34,6 +34,8 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
 
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemAdded;
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemRemoved;
+    public event Action<NetUserId, ProtoId<CurrencyStoreItemPrototype>, ItemModificationReason, NetUserId?>? PermanentItemAdded;
+    public event Action<NetUserId, ProtoId<CurrencyStoreItemPrototype>, ItemModificationReason, NetUserId?>? PermanentItemRemoved;
     public event Action<CurrencyStoreVoucher, ItemModificationReason, NetUserId?>? VoucherAdded;
     public event Action<CurrencyStoreVoucher, ItemModificationReason, NetUserId?>? VoucherRemoved;
 
@@ -132,9 +134,9 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
 
     #region Public Interface
 
-    public List<CurrencyStoreInventoryItem> GetInventory(NetUserId uid)
+    public List<CurrencyStoreInventoryItem> GetInventory(NetUserId uid, bool cache)
     {
-        return GetPlayerInventoryInternal(uid).Values.ToList();
+        return GetPlayerInventoryInternal(uid, cache).Values.ToList();
     }
 
     public bool CanAfford(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item)
@@ -184,29 +186,31 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         SetPlayerInventoryItemUses(item, uses);
     }
 
-    public async Task<HashSet<ProtoId<CurrencyStoreItemPrototype>>> GetPurchasedPermanentItems(NetUserId uid)
+    public HashSet<ProtoId<CurrencyStoreItemPrototype>> GetPurchasedPermanentItems(NetUserId uid, bool cache)
     {
-        throw new NotImplementedException();
+        return GetPlayerPermanentItemsInternal(uid, cache);
     }
 
-    public async Task<bool> CheckPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto)
+    public bool CheckPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto, bool cache)
     {
-        throw new NotImplementedException();
+        return GetPlayerPermanentItemOwnership(uid, proto, cache);
     }
 
-    public async Task SetPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto)
+    public void SetPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto, ItemModificationReason reason, NetUserId? actor)
     {
-        throw new NotImplementedException();
+        if (SetPlayerPermanentItemOwnership(uid, proto))
+            PermanentItemAdded?.Invoke(uid, proto, reason, actor);
     }
 
-    public async Task ClearPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto)
+    public void ClearPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto, ItemModificationReason reason, NetUserId? actor)
     {
-        throw new NotImplementedException();
+        if (ClearPlayerPermanentItemOwnership(uid, proto))
+            PermanentItemRemoved?.Invoke(uid, proto, reason, actor);
     }
 
-    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid)
+    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid, bool cache)
     {
-        return GetPlayerVouchersInternal(uid).Values.ToList();
+        return GetPlayerVouchersInternal(uid, cache).Values.ToList();
     }
 
     public CurrencyStoreVoucher? GetVoucher(int id)
@@ -476,11 +480,22 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         // Take the money from the player
         _currency.SetBalance(uid, newBalance);
 
-        // Give the player the item
-        var item = AddPlayerInventoryItem(uid, proto, proto.Immediate, proto.MaxUses);
+        if (!proto.Permanent)
+        {
+            // Give the player the item
+            var item = AddPlayerInventoryItem(uid, proto, proto.Immediate, proto.MaxUses);
 
-        // Send item added event, ServerCurrencyStoreSystem will handle immediate activation.
-        ItemAdded?.Invoke(item, ItemModificationReason.Purchase, uid);
+            // Send item added event, ServerCurrencyStoreSystem will handle immediate activation.
+            ItemAdded?.Invoke(item, ItemModificationReason.Purchase, uid);
+        }
+        else
+        {
+            // Mark the player as owning this item
+            SetPlayerPermanentItemOwnership(uid, proto);
+
+            // Send item added event.
+            PermanentItemAdded?.Invoke(uid, proto, ItemModificationReason.Purchase, uid);
+        }
 
         // Update dynamic price
         ModifyItemPrice(proto, proto.PriceIncrease, true);
@@ -594,6 +609,12 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
             return false;
         }
 
+        if (itemProto.Permanent && CheckPurchasedPermanentItem(voucher.Owner, itemProto, false))
+        {
+            result = _loc.GetString("currencystore-error-alreadyowned");
+            return false;
+        }
+
         result = "";
         return true;
     }
@@ -614,8 +635,17 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         if (!CanRedeemVoucherInternal(voucher, voucherProto, itemProto, out result))
             return false;
 
-        // Add voucher to inventory
-        var item = AddPlayerInventoryItem(voucher.Owner, itemProto, itemProto.Immediate, itemProto.MaxUses);
+        // Add item to inventory
+        if (!itemProto.Permanent)
+        {
+            var item = AddPlayerInventoryItem(voucher.Owner, itemProto, itemProto.Immediate, itemProto.MaxUses);
+            ItemAdded?.Invoke(item, ItemModificationReason.Purchase, voucher.Owner);
+        }
+        else
+        {
+            SetPlayerPermanentItemOwnership(voucher.Owner, itemProto);
+            PermanentItemAdded?.Invoke(voucher.Owner, itemProto, ItemModificationReason.Purchase, voucher.Owner);
+        }
 
         // Decrement voucher uses or remove it if it has none left
         if (voucher.UsesLeft > 1)
@@ -626,9 +656,6 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         {
             RemoveVoucher(voucher, ItemModificationReason.Activation, voucher.Owner);
         }
-
-        // Fire item added event
-        ItemAdded?.Invoke(item, ItemModificationReason.Purchase, voucher.Owner);
 
         result = "";
         return true;
@@ -1012,6 +1039,50 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         }
 
         return owns;
+    }
+
+    /// <summary>
+    ///     Mark a player as owning a permanent item
+    /// </summary>
+    /// <param name="uid">Player user ID</param>
+    /// <param name="proto">Item prototype</param>
+    private bool SetPlayerPermanentItemOwnership(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto)
+    {
+        // Update database
+        var task = Task.Run(() => _db.AddPermanentItemOwnership(uid, proto));
+        TrackPending(task);
+        var result = task.GetAwaiter().GetResult();
+
+        // Update cache
+        if (_cachedPlayerData.TryGetValue(uid, out var data))
+            data.PermanentItems.Add(proto);
+
+        // Send inventory
+        SendUpdatedPlayerData(uid, false, false, true);
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Mark a player as not owning a permanent item
+    /// </summary>
+    /// <param name="uid">Player user ID</param>
+    /// <param name="proto">Item prototype</param>
+    private bool ClearPlayerPermanentItemOwnership(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto)
+    {
+        // Update database
+        var task = Task.Run(() => _db.RemovePermanentItemOwnership(uid, proto));
+        TrackPending(task);
+        var result = task.GetAwaiter().GetResult();
+
+        // Update cache
+        if (_cachedPlayerData.TryGetValue(uid, out var data))
+            data.PermanentItems.Remove(proto);
+
+        // Send inventory
+        SendUpdatedPlayerData(uid, false, false, true);
+
+        return result;
     }
 
     #endregion
