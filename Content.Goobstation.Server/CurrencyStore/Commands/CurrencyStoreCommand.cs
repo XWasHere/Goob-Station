@@ -1,6 +1,7 @@
 using Content.Goobstation.Server.CurrencyStore.Managers;
 using Content.Goobstation.Server.CurrencyStore.Systems;
 using Content.Goobstation.Shared.CurrencyStore;
+using Content.Goobstation.Shared.CurrencyStore.Prototypes;
 using Content.Server.Administration;
 using Content.Server.Database;
 using Content.Shared.Administration;
@@ -8,6 +9,7 @@ using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Toolshed;
 using Robust.Shared.Toolshed.Syntax;
+using Robust.Shared.Toolshed.TypeParsers;
 
 namespace Content.Goobstation.Server.CurrencyStore.Commands;
 
@@ -26,8 +28,6 @@ public sealed class CurrencyStoreCommand : ToolshedCommand
     [Dependency] private readonly IServerCurrencyStoreManager _manager = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
 
-    private ServerCurrencyStoreSystem? _currencyStore;
-
     [CommandImplementation("transfer")]
     public void Transfer(IInvocationContext ctx,
         [PipedArgument]   IEnumerable<CurrencyStoreInventoryItem> items,
@@ -35,7 +35,7 @@ public sealed class CurrencyStoreCommand : ToolshedCommand
     {
         foreach (var item in items)
         {
-            if (!_manager.TryTransferItem(item, to.UserId, out string result))
+            if (!_manager.TryTransferItem(item, to.UserId, out var result))
                 ctx.WriteLine($"error transferring item {item.Id}: {result}");
         }
     }
@@ -45,27 +45,34 @@ public sealed class CurrencyStoreCommand : ToolshedCommand
         [PipedArgument]   IEnumerable<CurrencyStoreVoucher> vouchers,
         [CommandArgument] ICommonSession to)
     {
-        throw new NotImplementedException();
-
-        /*
         foreach (var voucher in vouchers)
         {
-            if (!_manager.TryTransferVoucher(voucher, to.UserId, out string result))
+            if (!_manager.TryTransferVoucher(voucher, to.UserId, out var result))
                 ctx.WriteLine($"error transferring item {voucher.Id}: {result}");
         }
-        */
     }
 
     [CommandImplementation("activate")]
     public void Activate(IInvocationContext ctx, [PipedArgument] IEnumerable<CurrencyStoreInventoryItem> items)
     {
-        _currencyStore ??= GetSys<ServerCurrencyStoreSystem>();
         foreach (var item in items)
         {
-            if (!_currencyStore.TryActivateItem(item, out var result))
+            if (!GetSys<ServerCurrencyStoreSystem>().TryActivateItem(item, out var result))
             {
                 ctx.WriteLine($"Failed to activate item [{item.Id} {item.Prototype}]: {result}");
             }
+        }
+    }
+
+    [CommandImplementation("redeem")]
+    public void Redeem(IInvocationContext ctx,
+        [PipedArgument]   IEnumerable<CurrencyStoreVoucher> vouchers,
+        [CommandArgument] ProtoId<CurrencyStoreItemPrototype> item)
+    {
+        foreach (var voucher in vouchers)
+        {
+            if (!_manager.TryRedeemVoucher(voucher, item, out var result))
+                ctx.WriteLine($"error redeeming voucher {voucher.Id} for {item}: {result}");
         }
     }
 }

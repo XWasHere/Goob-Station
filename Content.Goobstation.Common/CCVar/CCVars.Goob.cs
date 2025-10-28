@@ -333,6 +333,12 @@ public sealed partial class GoobCVars
     public static readonly CVarDef<bool> CurrencyStoreAllowTransferImmediate =
         CVarDef.Create("currencystore.allow_transfer_immediate", false, CVar.SERVERONLY);
 
+    /// <summary>
+    ///     Whether or not to allow players to purchase hidden items.
+    /// </summary>
+    public static readonly CVarDef<bool> CurrencyStoreAllowPurchaseHidden =
+        CVarDef.Create("currencystore.allow_purchase_hidden", false, CVar.SERVER | CVar.REPLICATED);
+
     #endregion
 
     #region Station Events

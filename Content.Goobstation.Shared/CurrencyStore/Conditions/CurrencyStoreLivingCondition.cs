@@ -24,7 +24,7 @@ public sealed partial class CurrencyStoreLivingCondition : CurrencyStoreConditio
 
     public override string GetLocalizedDescription()
     {
-        // TODO: Description
+        // TODO(XWH): Description
         return "";
     }
 }

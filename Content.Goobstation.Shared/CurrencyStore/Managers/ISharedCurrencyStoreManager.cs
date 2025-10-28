@@ -64,14 +64,14 @@ public interface ISharedCurrencyStoreManager
     ///     Gets a list of vouchers owned by a user.
     /// </summary>
     /// <param name="uid">The user to query</param>
-    public Task<List<CurrencyStoreVoucher>> GetVouchers(NetUserId uid);
+    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid);
 
     /// <summary>
     ///     Check if a voucher can be redeemed.
     /// </summary>
     /// <param name="voucher">The voucher to check</param>
     /// <param name="proto">The prototype of the item to be redeemed</param>
-    public Task<bool> CanRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> proto);
+    public bool CanRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> proto);
 
     #endregion
 }

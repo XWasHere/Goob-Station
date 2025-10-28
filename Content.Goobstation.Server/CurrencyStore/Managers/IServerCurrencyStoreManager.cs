@@ -21,9 +21,26 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     /// </summary>
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemRemoved;
 
+    /// <summary>
+    ///     Event fired when a voucher is added to a player's inventory
+    /// </summary>
+    public event Action<CurrencyStoreVoucher, ItemModificationReason, NetUserId?>? VoucherAdded;
+
+    /// <summary>
+    ///     Event fired when a voucher is removed from a player's inventory
+    /// </summary>
+    public event Action<CurrencyStoreVoucher, ItemModificationReason, NetUserId?>? VoucherRemoved;
+
     #endregion
 
     #region Items
+
+    /// <summary>
+    ///     Get an item by its database ID
+    /// </summary>
+    /// <param name="id">Item ID</param>
+    /// <returns>The item, if it exists</returns>
+    public CurrencyStoreInventoryItem? GetItem(int id);
 
     /// <summary>
     ///     Add an item to a player's inventory
@@ -85,17 +102,28 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     #region Vouchers
 
     /// <summary>
+    ///     Gets a voucher by its database ID
+    /// </summary>
+    /// <param name="id">Voucher ID</param>
+    /// <returns>The voucher, if it exists</returns>
+    public CurrencyStoreVoucher? GetVoucher(int id);
+
+    /// <summary>
     ///     Gives a user a voucher
     /// </summary>
     /// <param name="uid">The user to give the voucher to</param>
     /// <param name="proto">The prototype of the voucher to grant</param>
-    public Task AddVoucher(NetUserId uid, ProtoId<CurrencyStoreVoucherPrototype> proto);
+    /// <param name="reason">What caused this voucher to be removed</param>
+    /// <param name="actor">Who caused this voucher to be removed</param>
+    public CurrencyStoreVoucher? AddVoucher(NetUserId uid, ProtoId<CurrencyStoreVoucherPrototype> proto, int uses, ItemModificationReason reason = ItemModificationReason.Other, NetUserId? actor = null);
 
     /// <summary>
     ///     Remove a voucher from a player's inventory
     /// </summary>
     /// <param name="voucher">The voucher to remove</param>
-    public Task RemoveVoucher(CurrencyStoreVoucher voucher);
+    /// <param name="reason">What caused this voucher to be removed</param>
+    /// <param name="actor">Who caused this voucher to be removed</param>
+    public void RemoveVoucher(CurrencyStoreVoucher voucher, ItemModificationReason reason = ItemModificationReason.Other, NetUserId? actor = null);
 
     /// <summary>
     ///     Try to redeem a voucher.
@@ -104,7 +132,7 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     /// <param name="item">The item to redeem for</param>
     /// <param name="result">A string to be displayed to the user if the voucher can not be redeemed</param>
     /// <returns>If the voucher was successfully redeemed</returns>
-    public void TryRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> item, out string result);
+    public bool TryRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> item, out string result);
 
     /// <summary>
     ///     Try to transfer a voucher to another player
@@ -112,8 +140,8 @@ public interface IServerCurrencyStoreManager : ISharedCurrencyStoreManager
     /// <param name="voucher">The voucher to transfer</param>
     /// <param name="toUid"></param>
     /// <param name="result">A string to be displayed to the user if the voucher fails to activate</param>
-    /// <returns></returns>
-    public void TryTransferVoucher(CurrencyStoreVoucher voucher, NetUserId toUid, out string result);
+    /// <returns>If the voucher was transferred successfully</returns>
+    public bool TryTransferVoucher(CurrencyStoreVoucher voucher, NetUserId toUid, out string result);
 
     #endregion
 }

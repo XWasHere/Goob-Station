@@ -48,7 +48,7 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     private void OnRefreshStore(CurrencyStoreScRefreshStoreMessage message)
     {
-        // TODO: Replace this with real code
+        // TODO(XWH): Replace this with real code
         _sawmill.Debug("got store refresh from server");
         foreach (var record in message.UpdatedItems)
         {
@@ -75,11 +75,6 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
         throw new NotImplementedException();
     }
 
-    public bool CanActivateItem(CurrencyStoreInventoryItem item)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<HashSet<ProtoId<CurrencyStoreItemPrototype>>> GetPurchasedPermanentItems(NetUserId uid)
     {
         throw new NotImplementedException();
@@ -95,22 +90,17 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
         throw new NotImplementedException();
     }
 
-    public void RequestActivateItem(CurrencyStoreInventoryItem item)
-    {
-        throw new NotImplementedException();
-    }
-
     public void RequestTransferItem(CurrencyStoreInventoryItem item, string target)
     {
         throw new NotImplementedException();
     }
 
-    public Task<List<CurrencyStoreVoucher>> GetVouchers(NetUserId uid)
+    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid)
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> CanRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> proto)
+    public bool CanRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> proto)
     {
         throw new NotImplementedException();
     }

@@ -16,10 +16,8 @@ public sealed partial class CurrencyStoreGiveItemEffect : CurrencyStoreEffect
 
     public override void ExecuteEffect(NetUserId player, IEntityManager entityManager)
     {
-        var playerManager = IoCManager.Resolve<IPlayerManager>();
-
         // Get player entity
-        var playerEnt = playerManager.GetSessionById(player).AttachedEntity;
+        var playerEnt = IoCManager.Resolve<IPlayerManager>().GetSessionById(player).AttachedEntity;
         if (playerEnt == null)
             return;
 

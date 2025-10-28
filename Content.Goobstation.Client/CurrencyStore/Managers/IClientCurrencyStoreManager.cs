@@ -5,6 +5,9 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Goobstation.Client.CurrencyStore.Managers;
 
+/// <remarks>
+///     All client methods only work with the client's user ID. Requesting values for any other UID will throw an error.
+/// </remarks>
 public interface IClientCurrencyStoreManager : ISharedCurrencyStoreManager
 {
     #region Items
@@ -14,12 +17,6 @@ public interface IClientCurrencyStoreManager : ISharedCurrencyStoreManager
     /// </summary>
     /// <param name="proto">The prototype id of the item to purchase</param>
     public void RequestPurchaseItem(ProtoId<CurrencyStoreItemPrototype> proto);
-
-    /// <summary>
-    ///     Send a request to the server to activate an item
-    /// </summary>
-    /// <param name="item">The item to activate</param>
-    public void RequestActivateItem(CurrencyStoreInventoryItem item);
 
     /// <summary>
     ///     Send a request to the server to transfer an item to another player

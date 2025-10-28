@@ -64,6 +64,8 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         // Attach to manager events
         _manager.ItemAdded += OnManagerItemAdded;
         _manager.ItemRemoved += OnManagerItemRemoved;
+        _manager.VoucherAdded += OnManagerVoucherAdded;
+        _manager.VoucherRemoved += OnManagerVoucherRemoved;
 
         base.Initialize();
     }
@@ -73,6 +75,8 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         // Detach from manager events
         _manager.ItemAdded -= OnManagerItemAdded;
         _manager.ItemRemoved -= OnManagerItemRemoved;
+        _manager.VoucherAdded -= OnManagerVoucherRemoved;
+        _manager.VoucherRemoved -= OnManagerVoucherRemoved;
 
         base.Shutdown();
     }
@@ -102,6 +106,14 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
                         ProcessItemRemoved(inventoryItem, reason, actor);
                     break;
                 }
+                case CurrencyStoreVoucher voucher:
+                {
+                    if (added)
+                        ProcessVoucherAdded(voucher, reason, actor);
+                    else
+                        ProcessVoucherRemoved(voucher, reason, actor);
+                    break;
+                }
             }
         }
     }
@@ -113,9 +125,9 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     /// <summary>
     ///     Try activating an item.
     /// </summary>
-    /// <param name="item"></param>
-    /// <param name="result"></param>
-    /// <returns></returns>
+    /// <param name="item">The item to activate</param>
+    /// <param name="result">Any errors to display to the user</param>
+    /// <returns>If the item was activated successfully</returns>
     public bool TryActivateItem(CurrencyStoreInventoryItem item, out string result)
     {
         if (!_proto.TryIndex(item.Prototype, out var proto))
@@ -143,6 +155,18 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
             _itemChangesMailbox.Enqueue((false, item, reason, actor));
     }
 
+    private void OnManagerVoucherAdded(CurrencyStoreVoucher item, ItemModificationReason reason, NetUserId? actor)
+    {
+        lock (_itemChangesMailboxLock)
+            _itemChangesMailbox.Enqueue((true, item, reason, actor));
+    }
+
+    private void OnManagerVoucherRemoved(CurrencyStoreVoucher item, ItemModificationReason reason, NetUserId? actor)
+    {
+        lock (_itemChangesMailboxLock)
+            _itemChangesMailbox.Enqueue((false, item, reason, actor));
+    }
+
     #endregion
 
     #region Event Handling
@@ -153,20 +177,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         if (!_proto.TryIndex(item.Prototype, out var proto))
             return; // If we don't have the prototype, we can't do anything anyways. Just ignore it.
 
-        // Display message to user, if they are online
-        if (!_player.TryGetSessionById(item.Owner, out var owner))
-            return;
-
-        // We don't need to care about who the actor is, if we can't find them, display a placeholder name.
-        _player.TryGetSessionById(actorUid, out var actor);
-
-        if (_eventTypesToLocType.TryGetValue(reason, out var reasonString) &&
-            Loc.TryGetString($"currencystore-event-item-add-{reasonString}", out var message,
-                ("item", Loc.GetString(proto.Name)),
-                ("actor", GetLocalizedPlayerName(actor)),
-                ("owner", GetLocalizedPlayerName(owner)),
-                ("reason", (int) reason)))
-            NotifyUser(item.Owner, message);
+        DisplayAddedMessage("item", proto.Name, item.Owner, reason, actorUid);
     }
 
     private void ProcessItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actorUid)
@@ -175,21 +186,62 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         if (!_proto.TryIndex(item.Prototype, out var proto))
             return;
 
-        // Get owner if online, otherwise forget about it
-        if (!_player.TryGetSessionById(item.Owner, out var owner))
+        DisplayRemovedMessage("item", proto.Name, item.Owner, reason, actorUid);
+    }
+
+    private void ProcessVoucherAdded(CurrencyStoreVoucher voucher, ItemModificationReason reason, NetUserId? actorUid)
+    {
+        if (!_proto.TryIndex(voucher.Prototype, out var proto))
+            return;
+
+        DisplayAddedMessage("voucher", proto.Name, voucher.Owner, reason, actorUid);
+    }
+
+    private void ProcessVoucherRemoved(CurrencyStoreVoucher voucher, ItemModificationReason reason, NetUserId? actorUid)
+    {
+        if (!_proto.TryIndex(voucher.Prototype, out var proto))
+            return;
+
+        DisplayRemovedMessage("voucher", proto.Name, voucher.Owner, reason, actorUid);
+    }
+
+    private void DisplayAddedMessage(string locType,
+        string name,
+        NetUserId ownerUid,
+        ItemModificationReason reason,
+        NetUserId? actorUid)
+    {
+        // Display message to user, if they are online
+        if (!_player.TryGetSessionById(ownerUid, out var owner))
             return;
 
         // We don't need to care about who the actor is, if we can't find them, display a placeholder name.
         _player.TryGetSessionById(actorUid, out var actor);
+        if (_eventTypesToLocType.TryGetValue(reason, out var reasonString) &&
+            Loc.TryGetString($"currencystore-event-{locType}-add-{reasonString}", out var message,
+                ("item", Loc.GetString(name)),
+                ("actor", GetLocalizedPlayerName(actor)),
+                ("owner", GetLocalizedPlayerName(owner)),
+                ("reason", (int) reason)))
+            NotifyUser(ownerUid, message);
+    }
+
+    private void DisplayRemovedMessage(string locType, string name, NetUserId ownerUid, ItemModificationReason reason, NetUserId? actorUid)
+    {
+        // Get owner if online, otherwise forget about it
+        if (!_player.TryGetSessionById(ownerUid, out var owner))
+            return;
+
+        _player.TryGetSessionById(actorUid, out var actor);
 
         if (_eventTypesToLocType.TryGetValue(reason, out var reasonString) &&
-            Loc.TryGetString($"currencystore-event-item-remove-{reasonString}", out var message,
-                ("item", Loc.GetString(proto.Name)),
+            Loc.TryGetString($"currencystore-event-{locType}-remove-{reasonString}", out var message,
+                ("item", Loc.GetString(name)),
                 ("actor", GetLocalizedPlayerName(actor)),
                 ("owner", GetLocalizedPlayerName(owner)),
                 ("reason", (int) reason)))
             // When an item is transferred, it's owner is changed prior to us receiving the event.
-            NotifyUser(reason == ItemModificationReason.Transfer ? actor?.UserId ?? item.Owner : item.Owner, message);
+            NotifyUser(reason == ItemModificationReason.Transfer ? actor?.UserId ?? ownerUid : ownerUid, message);
     }
 
     #endregion

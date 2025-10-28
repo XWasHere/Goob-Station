@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Content.Goobstation.Common.CCVar;
@@ -6,7 +7,7 @@ using Content.Goobstation.Shared.CurrencyStore;
 using Content.Goobstation.Shared.CurrencyStore.Messages;
 using Content.Goobstation.Shared.CurrencyStore.Prototypes;
 using Content.Server.Database;
-using Content.Server.GameTicking;
+using Robust.Shared;
 using Robust.Shared.Asynchronous;
 using Robust.Shared.Configuration;
 using Robust.Shared.Network;
@@ -37,6 +38,8 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
 
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemAdded;
     public event Action<CurrencyStoreInventoryItem, ItemModificationReason, NetUserId?>? ItemRemoved;
+    public event Action<CurrencyStoreVoucher, ItemModificationReason, NetUserId?>? VoucherAdded;
+    public event Action<CurrencyStoreVoucher, ItemModificationReason, NetUserId?>? VoucherRemoved;
 
     /// <summary>
     ///     Tasks blocking the server shutting down.
@@ -154,6 +157,11 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         return CanPurchaseItemInternal(uid, proto, out _) >= 0;
     }
 
+    public CurrencyStoreInventoryItem? GetItem(int id)
+    {
+        return GetPlayerInventoryItem(id);
+    }
+
     public CurrencyStoreInventoryItem? AddItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> protoId, bool immediate, int uses, ItemModificationReason reason, NetUserId? actor)
     {
         if (!_proto.TryIndex(protoId, out var proto))
@@ -190,16 +198,6 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         throw new NotImplementedException();
     }
 
-    public async Task<List<CurrencyStoreVoucher>> GetVouchers(NetUserId uid)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<bool> CanRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> proto)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task SetPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto)
     {
         throw new NotImplementedException();
@@ -210,28 +208,54 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         throw new NotImplementedException();
     }
 
-    public async Task AddVoucher(NetUserId uid, ProtoId<CurrencyStoreVoucherPrototype> proto)
+    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid)
     {
-        throw new NotImplementedException();
+        return GetPlayerVouchersInternal(uid).Values.ToList();
     }
 
-    public async Task RemoveVoucher(CurrencyStoreVoucher voucher)
+    public CurrencyStoreVoucher? GetVoucher(int id)
     {
-        throw new NotImplementedException();
+        return GetPlayerVoucher(id);
     }
 
-    public void TryRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> item, out string result)
+    public CurrencyStoreVoucher? AddVoucher(NetUserId uid, ProtoId<CurrencyStoreVoucherPrototype> proto, int uses, ItemModificationReason reason, NetUserId? actor)
     {
-        result = "";
+        if (!_proto.TryIndex(proto, out var voucher))
+            return null;
 
-        throw new NotImplementedException();
+        var item = AddPlayerVoucher(uid, voucher, uses);
+        VoucherAdded?.Invoke(item, reason, actor);
+        return item;
     }
 
-    public void TryTransferVoucher(CurrencyStoreVoucher voucher, NetUserId toUid, out string result)
+    public void RemoveVoucher(CurrencyStoreVoucher voucher, ItemModificationReason reason, NetUserId? actor)
     {
-        result = "";
+        RemovePlayerVoucher(voucher);
+        VoucherRemoved?.Invoke(voucher, reason, actor);
+    }
 
-        throw new NotImplementedException();
+    public bool CanRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> item)
+    {
+        if (!_proto.TryIndex(voucher.Prototype, out var voucherPrototype) ||
+            !_proto.TryIndex(item, out var itemPrototype))
+            return false;
+
+        return CanRedeemVoucherInternal(voucher, voucherPrototype, itemPrototype, out _);
+    }
+
+    public bool TryRedeemVoucher(CurrencyStoreVoucher voucher, ProtoId<CurrencyStoreItemPrototype> item, out string result)
+    {
+        result = "Invalid prototype";
+        if (!_proto.TryIndex(voucher.Prototype, out var voucherPrototype) ||
+            !_proto.TryIndex(item, out var itemPrototype))
+            return false;
+
+        return TryRedeemVoucherInternal(voucher, voucherPrototype, itemPrototype, out result);
+    }
+
+    public bool TryTransferVoucher(CurrencyStoreVoucher voucher, NetUserId toUid, out string result)
+    {
+        return TryTransferVoucherInternal(voucher, toUid, out result);
     }
 
     #endregion
@@ -285,6 +309,23 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
                 // Transfer item
                 NetSendResult(message.MsgChannel,
                     TryTransferItemInternal(item, targetUid, out string result),
+                    result);
+
+                return;
+            }
+            case CurrencyStoreCsRequestTransferMessage.TransferType.Voucher:
+            {
+                // Get voucher
+                var voucher = GetPlayerVoucher(message.Id);
+                if (voucher == null || voucher.Owner != message.MsgChannel.UserId)
+                {
+                    NetFailGeneric(message.MsgChannel, _loc.GetString("currencystore-error-notowned"));
+                    return;
+                }
+
+                // Transfer voucher
+                NetSendResult(message.MsgChannel,
+                    TryTransferVoucherInternal(voucher, targetUid, out string result),
                     result);
 
                 return;
@@ -528,6 +569,102 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
 
     #region Vouchers
 
+    /// <summary>
+    ///     Check if a player can redeem a voucher
+    /// </summary>
+    /// <param name="voucher">The voucher record</param>
+    /// <param name="voucherProto">The voucher prototype</param>
+    /// <param name="itemProto">The item prototype</param>
+    /// <param name="result">Error output</param>
+    /// <returns>If the voucher can be redeemed</returns>
+    private bool CanRedeemVoucherInternal(CurrencyStoreVoucher voucher,
+        CurrencyStoreVoucherPrototype voucherProto,
+        CurrencyStoreItemPrototype itemProto,
+        out string result)
+    {
+        // Check tags and categories
+        if (voucherProto.Tags.Count != 0 && !voucherProto.Tags.Overlaps(itemProto.Tags) ||
+            voucherProto.Categories.Count != 0 && !voucherProto.Categories.Contains(itemProto.Category))
+        {
+            result = _loc.GetString("currencystore-error-voucherdisallowed");
+            return false;
+        }
+
+        // Check that item is in store
+        if (!_proto.TryIndex(itemProto.Category, out var categoryPrototype) ||
+            !categoryPrototype.InStore && !_cfg.GetCVar(GoobCVars.CurrencyStoreAllowPurchaseHidden))
+        {
+            result = _loc.GetString("currencystore-error-hidden");
+            return false;
+        }
+
+        result = "";
+        return true;
+    }
+
+    /// <summary>
+    ///     Try to redeem a voucher
+    /// </summary>
+    /// <param name="voucher">Voucher to redeem</param>
+    /// <param name="voucherProto">Voucher prototoype</param>
+    /// <param name="itemProto">Item to redeem the voucher for</param>
+    /// <param name="result">Error string</param>
+    /// <returns>If the voucher was successfully redeemed</returns>
+    private bool TryRedeemVoucherInternal(CurrencyStoreVoucher voucher,
+        CurrencyStoreVoucherPrototype voucherProto,
+        CurrencyStoreItemPrototype itemProto,
+        out string result)
+    {
+        if (!CanRedeemVoucherInternal(voucher, voucherProto, itemProto, out result))
+            return false;
+
+        // Add voucher to inventory
+        var item = AddPlayerInventoryItem(voucher.Owner, itemProto, itemProto.Immediate, itemProto.MaxUses);
+
+        // Decrement voucher uses or remove it if it has none left
+        if (voucher.UsesLeft > 1)
+        {
+            SetPlayerVoucherUses(voucher, voucher.UsesLeft - 1);
+        }
+        else
+        {
+            RemoveVoucher(voucher, ItemModificationReason.Activation, voucher.Owner);
+        }
+
+        // Fire item added event
+        ItemAdded?.Invoke(item, ItemModificationReason.Purchase, voucher.Owner);
+
+        result = "";
+        return true;
+    }
+
+    /// <summary>
+    ///     Try to transfer a voucher to another player
+    /// </summary>
+    /// <remarks>Directly copied from <see cref="TryTransferItemInternal"/></remarks>
+    /// <param name="item">Voucher to transfer</param>
+    /// <param name="to">User to transfer the voucher to</param>
+    /// <param name="result">Error string</param>
+    /// <returns>If the voucher was transferred successfully</returns>
+    private bool TryTransferVoucherInternal(CurrencyStoreVoucher item, NetUserId to, out string result)
+    {
+        var prev = item.Owner;
+        result = "";
+
+        // Check that we don't already own the item
+        if (item.Owner == to)
+            return true;
+
+        // Transfer the item
+        SetPlayerVoucherOwner(item, to);
+
+        // Send item added and removed event
+        VoucherRemoved?.Invoke(item, ItemModificationReason.Transfer, prev);
+        VoucherAdded?.Invoke(item, ItemModificationReason.Transfer, prev);
+
+        return true;
+    }
+
     #endregion
 
     #region DB
@@ -664,7 +801,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     private void SetPlayerItemOwner(CurrencyStoreInventoryItem item, NetUserId owner)
     {
         // Update database
-        var task = Task.Run(() => _db.SetPlayerItemOwner(item.Id, owner));
+        var task = Task.Run(() => _db.SetPlayerInventoryItemOwner(item.Id, owner));
         TrackPending(task);
         task.GetAwaiter().GetResult();
 
@@ -692,7 +829,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     private void RemovePlayerInventoryItem(CurrencyStoreInventoryItem item)
     {
         // Update database
-        var task = Task.Run(() => _db.DeletePlayerInventoryItem(item.Id));
+        var task = Task.Run(() => _db.RemovePlayerInventoryItem(item.Id));
         TrackPending(task);
         task.GetAwaiter().GetResult();
 
@@ -722,6 +859,108 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
             data.Vouchers = fresh;
 
         return fresh;
+    }
+
+    private CurrencyStoreVoucher? GetPlayerVoucher(int id)
+    {
+        // Get data
+        var fresh = Task.Run(() => _db.GetStoreVoucher(id)).GetAwaiter().GetResult();
+
+        // Maybe update cache
+        if (fresh != null && _cachedPlayerData.TryGetValue(fresh.Owner, out var data))
+            data.Vouchers[id] = fresh;
+
+        return fresh;
+    }
+
+    private CurrencyStoreVoucher AddPlayerVoucher(NetUserId uid, CurrencyStoreVoucherPrototype prototype, int uses)
+    {
+        // Add a new voucher to the database
+        var task = Task.Run(() => _db.AddStoreVoucher(uid, prototype, uses));
+        TrackPending(task);
+        var record = task.GetAwaiter().GetResult();
+
+        // Update cache if player is connected
+        if (_cachedPlayerData.TryGetValue(uid, out var data))
+            data.Vouchers.Add(record.Id, record);
+
+        // Send updated inventory to player
+        SendUpdatedPlayerData(uid, false, true, false);
+
+        // Return item
+        return record;
+    }
+
+    /// <summary>
+    ///     Set the number of uses left on an voucher.
+    /// </summary>
+    /// <param name="item">The voucher to modify</param>
+    /// <param name="uses">Remaining uses</param>
+    private void SetPlayerVoucherUses(CurrencyStoreVoucher item, int uses)
+    {
+        // Update database
+        var task = Task.Run(() => _db.SetVoucherUses(item.Id, uses));
+        TrackPending(task);
+        task.GetAwaiter().GetResult();
+
+        // Update uses on voucher
+        item.UsesLeft = uses;
+
+        // Update cache if player is connected
+        if (_cachedPlayerData.TryGetValue(item.Owner, out var data)
+            && data.Vouchers.TryGetValue(item.Id, out var cachedItem))
+            cachedItem.UsesLeft = uses;
+
+        // Send updated inventory to player
+        SendUpdatedPlayerData(item.Owner, false, true, false);
+    }
+
+    /// <summary>
+    ///     Set a voucher's owner
+    /// </summary>
+    /// <param name="item">The voucher to modify</param>
+    /// <param name="owner">New owner</param>
+    private void SetPlayerVoucherOwner(CurrencyStoreVoucher item, NetUserId owner)
+    {
+        // Update database
+        var task = Task.Run(() => _db.SetVoucherOwner(item.Id, owner));
+        TrackPending(task);
+        task.GetAwaiter().GetResult();
+
+        // Update cache if players are connected
+        if (_cachedPlayerData.TryGetValue(item.Owner, out var oldData))
+            oldData.Vouchers.Remove(item.Id);
+
+        if (_cachedPlayerData.TryGetValue(owner, out var newData))
+            newData.Vouchers.Add(item.Id, item);
+
+        // Send previous player updated inventory
+        SendUpdatedPlayerData(item.Owner, false, true, false);
+
+        // Update item
+        item.Owner = owner;
+
+        // Send new owner updated inventory
+        SendUpdatedPlayerData(item.Owner, false, true, false);
+    }
+
+    /// <summary>
+    ///     Remove a voucher from a player's inventory
+    /// </summary>
+    /// <param name="item">The voucher to remove</param>
+    private void RemovePlayerVoucher(CurrencyStoreVoucher item)
+    {
+        // Update database
+        var task = Task.Run(() => _db.RemoveStoreVoucher(item.Id));
+        TrackPending(task);
+        task.GetAwaiter().GetResult();
+
+        // Update cache if player is connected
+        if (_cachedPlayerData.TryGetValue(item.Owner, out var data))
+            data.Vouchers.Remove(item.Id);
+
+        // Send updated player inventory
+        SendUpdatedPlayerData(item.Owner, false, true, false);
     }
 
     #endregion

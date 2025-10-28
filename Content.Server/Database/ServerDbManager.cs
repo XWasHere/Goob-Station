@@ -476,7 +476,7 @@ namespace Content.Server.Database
         /// Remove an item from a player's inventory
         /// </summary>
         /// <param name="id">The database id of the item</param>
-        Task DeletePlayerInventoryItem(int id);
+        Task RemovePlayerInventoryItem(int id);
 
         /// <summary>
         /// Set the number of uses remaining on an item in a player's inventory
@@ -490,7 +490,7 @@ namespace Content.Server.Database
         /// </summary>
         /// <param name="id">The database id of the item</param>
         /// <param name="owner">The user id of the new owner</param>
-        Task SetPlayerItemOwner(int id, NetUserId owner);
+        Task SetPlayerInventoryItemOwner(int id, NetUserId owner);
 
         /// <summary>
         /// Get the permanent items purchased by the player.
@@ -544,6 +544,13 @@ namespace Content.Server.Database
         /// </summary>
         /// <param name="id">The database id of the voucher</param>
         Task RemoveStoreVoucher(int id);
+
+        /// <summary>
+        /// Set the number of uses on a voucher
+        /// </summary>
+        /// <param name="id">The voucher ID</param>
+        /// <param name="uses">The number of uses left</param>
+        Task SetVoucherUses(int id, int uses);
 
         /// <summary>
         /// Set the owner of a voucher.
@@ -1404,10 +1411,10 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.AddPlayerInventoryItem(player, prototype, immediate, uses));
         }
 
-        public Task DeletePlayerInventoryItem(int id)
+        public Task RemovePlayerInventoryItem(int id)
         {
             DbWriteOpsMetric.Inc();
-            return RunDbCommand(() => _db.DeletePlayerInventoryItem(id));
+            return RunDbCommand(() => _db.RemovePlayerInventoryItem(id));
         }
 
         public Task SetPlayerInventoryItemUses(int id, int uses)
@@ -1416,10 +1423,10 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.SetPlayerInventoryItemUses(id, uses));
         }
 
-        public Task SetPlayerItemOwner(int id, NetUserId owner)
+        public Task SetPlayerInventoryItemOwner(int id, NetUserId owner)
         {
             DbWriteOpsMetric.Inc();
-            return RunDbCommand(() => _db.SetPlayerItemOwner(id, owner));
+            return RunDbCommand(() => _db.SetPlayerInventoryItemOwner(id, owner));
         }
 
         public Task<List<ProtoId<CurrencyStoreItemPrototype>>> GetPlayerOwnedPermanentItems(NetUserId player)
@@ -1468,6 +1475,12 @@ namespace Content.Server.Database
         {
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.RemoveStoreVoucher(id));
+        }
+
+        public Task SetVoucherUses(int id, int uses)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.SetVoucherUses(id, uses));
         }
 
         public Task SetVoucherOwner(int id, NetUserId owner)

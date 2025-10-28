@@ -19,9 +19,14 @@ effects and conditions that cannot be predicted are kept in Content.Goobstation.
 - [ ] Make ServerCurrencyStoreManager block the main thread less
 - [ ] Why the fuck is ServerCurrencyStoreSystem also using NetMessages???
     - [ ] Use a RequestActivationMessage and a RequestActivationResponseMessage event
-- [ ] Replace hardcoded strings with localized strings
+- [x] Replace hardcoded strings with localized strings
 - [ ] Move all item condition and activation code to ServerCurrencyStoreSystem
-- [ ] Change ServerCurrencyStoreManager to output error strings to a output parameter instead of passing in a channel so that ServerCurrencyStoreSystem can use the messages in item activation requests/responses when they're made into events.
+- [x] Change ServerCurrencyStoreManager to output error strings to a output parameter instead of passing in a channel so that ServerCurrencyStoreSystem can use the messages in item activation requests/responses when they're made into events.
+- [ ] The voucher/item DB code is almost exactly the same. Find ways to reuse/simplify it
+- [ ] Ask admins whether or not immediate items redeemed from vouchers should be immediate or not.
+- [ ] Remove the ability to depend on SharedCurrencyStoreManager. It shouldn't be used for any reason.
+  - [ ] Remove SharedCurrencyStoreManager entirely. The server and client have completely different needs.
+- [ ] Split up CurrencyStoreSystem and CurrencyStoreManager as partial classes.
 - [ ] Explain in this document how to add conditions and effects
 - [ ] Explain in this document how to utilize permanent items in other systems
 - [ ] Explain in this document how to make new categories in YAML

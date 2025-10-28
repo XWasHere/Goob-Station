@@ -37,11 +37,10 @@ public sealed class TokenCommand : ToolshedCommand
         [CommandArgument] ProtoId<CurrencyStoreItemPrototype> prototype,
         [CommandArgument] int uses = 0)
     {
-        if (!_proto.TryIndex(prototype, out var proto))
-            ctx.ReportError(new NotAValidPrototype(prototype, "CurrencyStoreItemPrototype"));
+        var proto = _proto.Index(prototype);
 
         if (uses <= 0)
-            uses = proto?.MaxUses ?? 1; // It's fine if this is 1. Toolshed will halt the command when it sees the error, the LINQ query will never be executed.
+            uses = proto.MaxUses;
 
         // This always returns a value if the prototype is valid.
         return sessions.Select(s => _manager.AddItem(s.UserId, prototype, false, uses, ItemModificationReason.Admin, ctx.User)!);

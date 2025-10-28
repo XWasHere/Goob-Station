@@ -2128,7 +2128,7 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             return MakeInventoryItem(item);
         }
 
-        public async Task DeletePlayerInventoryItem(int id)
+        public async Task RemovePlayerInventoryItem(int id)
         {
             await using var db = await GetDb();
 
@@ -2158,7 +2158,7 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             await db.DbContext.SaveChangesAsync();
         }
 
-        public async Task SetPlayerItemOwner(int id, NetUserId owner)
+        public async Task SetPlayerInventoryItemOwner(int id, NetUserId owner)
         {
             await using var db = await GetDb();
 
@@ -2293,11 +2293,17 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
             await db.DbContext.SaveChangesAsync();
         }
 
+        public async Task SetVoucherUses(int id, int uses)
+        {
+            // See SetVoucherOwner
+            await SetPlayerInventoryItemUses(id, uses);
+        }
+
         public async Task SetVoucherOwner(int id, NetUserId owner)
         {
             // These are stored the exact same way, if we ever need different
             // logic here, replace this call with it.
-            await SetPlayerItemOwner(id, owner);
+            await SetPlayerInventoryItemOwner(id, owner);
         }
 
         [return: NotNullIfNotNull(nameof(row))]
