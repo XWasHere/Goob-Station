@@ -9,8 +9,8 @@ using Content.Goobstation.Server.IoC;
 using Content.Goobstation.Server.Voice;
 using Content.Goobstation.Common.JoinQueue;
 using Content.Goobstation.Common.ServerCurrency;
+using Content.Goobstation.Server.CurrencyStore.Managers;
 using Content.Goobstation.Server.ServerCurrency;
-using Content.Goobstation.Shared.CurrencyStore.Managers;
 using Robust.Shared.ContentPack;
 using Robust.Shared.Timing;
 
@@ -20,7 +20,7 @@ public sealed class EntryPoint : GameServer
 {
     private IVoiceChatServerManager _voiceManager = default!;
     private ICommonCurrencyManager _curr = default!;
-    private ISharedCurrencyStoreManager _currencyStore = default!;
+    private IServerCurrencyStoreManager _currencyStore = default!;
 
     public override void Init()
     {
@@ -38,7 +38,7 @@ public sealed class EntryPoint : GameServer
         _curr.Initialize(); // Goobstation
 
         // Goobstation - Currency Store
-        _currencyStore = IoCManager.Resolve<ISharedCurrencyStoreManager>();
+        _currencyStore = IoCManager.Resolve<IServerCurrencyStoreManager>();
         _currencyStore.Initialize();
     }
 

@@ -15,7 +15,6 @@ using Content.Goobstation.Client.Redial;
 using Content.Goobstation.Client.ServerCurrency;
 using Content.Goobstation.Client.Voice;
 using Content.Goobstation.Common.ServerCurrency;
-using Content.Goobstation.Shared.CurrencyStore.Managers;
 using Content.Goobstation.Shared.MisandryBox.JumpScare;
 using Robust.Shared.IoC;
 
@@ -33,7 +32,6 @@ internal static class ContentGoobClientIoC
         collection.Register<JoinQueueManager>();
         collection.Register<IFullScreenImageJumpscare, ClientFullScreenImageJumpscare>();
         collection.Register<ICommonCurrencyManager, ClientCurrencyManager>();
-        collection.Register<ISharedCurrencyStoreManager, ClientCurrencyStoreManager>();
         collection.Register<IClientCurrencyStoreManager, ClientCurrencyStoreManager>();
     }
 }

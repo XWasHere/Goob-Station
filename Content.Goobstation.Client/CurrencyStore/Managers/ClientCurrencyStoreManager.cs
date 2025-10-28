@@ -60,27 +60,27 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     #region Public Interface
 
-    public List<CurrencyStoreInventoryItem> GetInventory(NetUserId uid)
+    public List<CurrencyStoreInventoryItem> GetInventory()
     {
         throw new NotImplementedException();
     }
 
-    public bool CanAfford(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item)
+    public bool CanAfford(ProtoId<CurrencyStoreItemPrototype> item)
     {
         throw new NotImplementedException();
     }
 
-    public bool CanPurchaseItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> item)
+    public bool CanPurchaseItem(ProtoId<CurrencyStoreItemPrototype> item)
     {
         throw new NotImplementedException();
     }
 
-    public Task<HashSet<ProtoId<CurrencyStoreItemPrototype>>> GetPurchasedPermanentItems(NetUserId uid)
+    public HashSet<ProtoId<CurrencyStoreItemPrototype>> GetPurchasedPermanentItems()
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> CheckPurchasedPermanentItem(NetUserId uid, ProtoId<CurrencyStoreItemPrototype> proto)
+    public bool CheckPurchasedPermanentItem(ProtoId<CurrencyStoreItemPrototype> proto)
     {
         throw new NotImplementedException();
     }
@@ -95,7 +95,7 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
         throw new NotImplementedException();
     }
 
-    public List<CurrencyStoreVoucher> GetVouchers(NetUserId uid)
+    public List<CurrencyStoreVoucher> GetVouchers()
     {
         throw new NotImplementedException();
     }

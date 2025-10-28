@@ -7,12 +7,12 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+using Content.Goobstation.Client.CurrencyStore.Managers;
 using Content.Goobstation.Client.IoC;
 using Content.Goobstation.Client.Polls;
 using Content.Goobstation.Client.Voice;
 using Content.Goobstation.Client.JoinQueue;
 using Content.Goobstation.Common.ServerCurrency;
-using Content.Goobstation.Shared.CurrencyStore.Managers;
 using Robust.Shared.ContentPack;
 using Robust.Shared.Timing;
 
@@ -24,7 +24,7 @@ public sealed class EntryPoint : GameClient
     [Dependency] private readonly JoinQueueManager _joinQueue = default!;
     [Dependency] private readonly PollManager _pollManager = default!;
     [Dependency] private readonly ICommonCurrencyManager _currMan = default!;
-    [Dependency] private readonly ISharedCurrencyStoreManager _currencyStore = default!;
+    [Dependency] private readonly IClientCurrencyStoreManager _currencyStore = default!;
 
     public override void Init()
     {

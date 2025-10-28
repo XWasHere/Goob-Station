@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Content.Goobstation.Common.CCVar;
@@ -7,7 +6,6 @@ using Content.Goobstation.Shared.CurrencyStore;
 using Content.Goobstation.Shared.CurrencyStore.Messages;
 using Content.Goobstation.Shared.CurrencyStore.Prototypes;
 using Content.Server.Database;
-using Robust.Shared;
 using Robust.Shared.Asynchronous;
 using Robust.Shared.Configuration;
 using Robust.Shared.Network;
@@ -21,8 +19,6 @@ namespace Content.Goobstation.Server.CurrencyStore.Managers;
 /// </summary>
 /// <remarks>
 ///     Abandon all hope, ye who enter here.
-///
-///     TODO: Some of this could probably be async-ified. We block the main thread a lot.
 /// </remarks>
 /// <seealso cref="Systems.ServerCurrencyStoreSystem"/>
 public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager

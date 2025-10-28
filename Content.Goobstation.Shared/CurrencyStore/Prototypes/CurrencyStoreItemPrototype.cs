@@ -1,4 +1,3 @@
-using Content.Goobstation.Shared.CurrencyStore.Managers;
 using Content.Goobstation.Shared.Serialization;
 using Robust.Shared.Prototypes;
 
