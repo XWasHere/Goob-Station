@@ -28,9 +28,10 @@ currencystore-event-permanent-remove-purchase = You purchased {INDEFINITE($item)
 
 # other errors
 currencystore-error-prototype = Invalid prototype
-currencystore-error-offline = You cannot activate this item right now: {$reason}
-currencystore-error-condition = You cannot activate this item right now.
-currencystore-error-roundstate = Player is currently offline.
+currencystore-error-condition = You cannot activate this item right now: {$reason}
+currencystore-error-immediatefailure = Failed to activate item, waiting until next round.
+currencystore-error-roundstate = You cannot activate this item right now.
+currencystore-error-offline = Player is currently offline.
 currencystore-error-notowned = You do not own this item.
 currencystore-error-noimmediate = This server does not allow transferring items that are pending activation.
 currencystore-error-alreadyowned = You already own this item.
