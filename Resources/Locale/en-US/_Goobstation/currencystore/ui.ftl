@@ -1,5 +1,7 @@
 currencystore-unknown-user = an unknown user
 
+currencystore-item-activated = Your {$item} was activated.
+
 # inventory change notifications
 currencystore-event-item-add-generic = You got {INDEFINITE($item)} {$item}.
 currencystore-event-item-add-admin = You were given {INDEFINITE($item)} {$item} by {$actor}.

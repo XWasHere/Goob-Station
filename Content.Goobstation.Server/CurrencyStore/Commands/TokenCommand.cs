@@ -35,7 +35,8 @@ public sealed class TokenCommand : ToolshedCommand
     public IEnumerable<CurrencyStoreInventoryItem> Add(IInvocationContext ctx,
         [PipedArgument]   IEnumerable<ICommonSession> sessions,
         [CommandArgument] ProtoId<CurrencyStoreItemPrototype> prototype,
-        [CommandArgument] int uses = 0)
+        [CommandArgument] int uses = 0,
+        [CommandArgument] bool immediate = false)
     {
         var proto = _proto.Index(prototype);
 
@@ -43,7 +44,7 @@ public sealed class TokenCommand : ToolshedCommand
             uses = proto.MaxUses;
 
         // This always returns a value if the prototype is valid.
-        return sessions.Select(s => _manager.AddItem(s.UserId, prototype, false, uses, ItemModificationReason.Admin, ctx.User)!);
+        return sessions.Select(s => _manager.AddItem(s.UserId, prototype, immediate, uses, ItemModificationReason.Admin, ctx.User)!);
     }
 
     [CommandImplementation("remove")]

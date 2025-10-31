@@ -34,6 +34,19 @@
   maxUses: 5
   effects: []
 
+# test preround immediate tokens
+- type: currencyStoreItem
+  id: DebugBrokenScheduler
+  name: Set Gamemode to The Guide Token
+  description: Why would anybody do this?
+  category: Debug
+  price: 30000
+  redeemable: preround
+  immediate: true
+  effects:
+  - !type:CurrencyStoreSetPresetEffect
+    prototype: TheGuide
+
 # test that permanent items work correctly
 - type: currencyStoreItem
   id: DebugPermanentExample

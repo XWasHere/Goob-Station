@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using Content.Goobstation.Server.CurrencyStore.Managers;
 using Content.Goobstation.Shared.CurrencyStore;
@@ -9,7 +10,9 @@ using Content.Server.Chat.Systems;
 using Content.Server.GameTicking;
 using Content.Server.Popups;
 using Content.Shared.Chat;
+using Content.Shared.GameTicking;
 using Content.Shared.Popups;
+using Robust.Shared.Enums;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
@@ -33,8 +36,13 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     [Dependency] private readonly GameTicker _ticker = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
 
-    #region Localization Dictionaries
-
+    /// <summary>
+    ///     Mapping of item modification reasons to their localization string name parts.
+    ///     Anything not in this dictionary will be ignored by the DisplayMessage methods.
+    /// </summary>
+    /// <remarks>
+    ///     Activation messages are handled by <see cref="TryActivateItemInternal"/>
+    /// </remarks>
     private readonly Dictionary<ItemModificationReason, string> _eventTypesToLocType = new()
     {
         { ItemModificationReason.Admin, "admin" },
@@ -43,13 +51,12 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         { ItemModificationReason.Other, "generic" }
     };
 
-    #endregion
-
     #region Lifecycle
 
     public override void Initialize()
     {
-        // Attach to manager events
+        // WARNING: These can activate items, if any of this is invoked from async code WE'RE FUCKED!!!!
+        // Attach to manager events.
         _manager.ItemAdded += OnManagerItemAdded;
         _manager.ItemRemoved += OnManagerItemRemoved;
         _manager.VoucherAdded += OnManagerVoucherAdded;
@@ -57,18 +64,23 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         _manager.PermanentItemAdded += OnManagerPermanentItemAdded;
         _manager.PermanentItemRemoved += OnManagerPermanentItemRemoved;
 
+        // Activate items when the round state changes
+        SubscribeLocalEvent<GameRunLevelChangedEvent>(OnGameRunLevelChanged);
+
+        // Handle players who join the round late.
+        SubscribeLocalEvent<PlayerSpawnCompleteEvent>(OnPlayerSpawnComplete);
+
         base.Initialize();
     }
 
     public override void Shutdown()
     {
-        // Detach from manager events
         _manager.ItemAdded -= OnManagerItemAdded;
         _manager.ItemRemoved -= OnManagerItemRemoved;
         _manager.VoucherAdded -= OnManagerVoucherRemoved;
         _manager.VoucherRemoved -= OnManagerVoucherRemoved;
-        _manager.PermanentItemAdded += OnManagerPermanentItemAdded;
-        _manager.PermanentItemRemoved += OnManagerPermanentItemRemoved;
+        _manager.PermanentItemAdded -= OnManagerPermanentItemAdded;
+        _manager.PermanentItemRemoved -= OnManagerPermanentItemRemoved;
 
         base.Shutdown();
     }
@@ -98,6 +110,30 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
     #region Event Handling
 
+    private void OnGameRunLevelChanged(GameRunLevelChangedEvent args)
+    {
+        switch (args.New)
+        {
+            case GameRunLevel.InRound:
+                foreach (var player in _player.Sessions.Where(_ticker.UserHasJoinedGame))
+                    ActivateImmediateItems(player, CurrencyStoreRoundState.InRound);
+                break;
+            case GameRunLevel.PreRoundLobby:
+                foreach (var player in _player.Sessions.Where(s => s.Status == SessionStatus.InGame))
+                    ActivateImmediateItems(player, CurrencyStoreRoundState.PreRound);
+                break;
+        }
+    }
+
+    private void OnPlayerSpawnComplete(PlayerSpawnCompleteEvent args)
+    {
+        // If we're starting a round, that will be handled in OnGameRunLevelChanged
+        if (_ticker.RunLevel != GameRunLevel.InRound)
+            return;
+
+        ActivateImmediateItems(args.Player, CurrencyStoreRoundState.InRound);
+    }
+
     private void OnManagerItemAdded(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor)
     {
         // Get item prototype
@@ -106,6 +142,10 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
         // Send popup to player
         DisplayAddedMessage("item", proto.Name, item.Owner, reason, actor);
+
+        // Activate immediate items
+        if (item.Immediate && !TryActivateItem(item, out _))
+            NotifyUser(item.Owner, Loc.GetString("currencystore-error-immediatefailure"));
     }
 
     private void OnManagerItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor)
@@ -171,8 +211,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
             Loc.TryGetString($"currencystore-event-{locType}-add-{reasonString}", out var message,
                 ("item", Loc.GetString(name)),
                 ("actor", GetLocalizedPlayerName(actor)),
-                ("owner", GetLocalizedPlayerName(owner)),
-                ("reason", (int) reason)))
+                ("owner", GetLocalizedPlayerName(owner))))
             NotifyUser(ownerUid, message);
     }
 
@@ -188,8 +227,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
             Loc.TryGetString($"currencystore-event-{locType}-remove-{reasonString}", out var message,
                 ("item", Loc.GetString(name)),
                 ("actor", GetLocalizedPlayerName(actor)),
-                ("owner", GetLocalizedPlayerName(owner)),
-                ("reason", (int) reason)))
+                ("owner", GetLocalizedPlayerName(owner))))
             // When an item is transferred, it's owner is changed prior to us receiving the event.
             NotifyUser(reason == ItemModificationReason.Transfer ? actor?.UserId ?? ownerUid : ownerUid, message);
     }
@@ -197,6 +235,25 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     #endregion
 
     #region Item Activation
+
+    /// <summary>
+    ///     Try to activate a player's immediate items
+    /// </summary>
+    /// <param name="player">Player to process</param>
+    /// <param name="allowedRoundStates">Which kinds of items to activate</param>
+    private void ActivateImmediateItems(ICommonSession player, CurrencyStoreRoundState allowedRoundStates)
+    {
+        foreach (var item in _manager.GetInventory(player.UserId))
+        {
+            if (!item.Immediate ||
+                !_proto.TryIndex(item.Prototype, out var proto) ||
+                (proto.Redeemable & allowedRoundStates) == 0)
+                continue;
+
+            if (!TryActivateItemInternal(player.UserId, item, proto, out _))
+                NotifyUser(item.Owner, Loc.GetString("currencystore-error-immediatefailure"));
+        }
+    }
 
     /// <summary>
     ///     Try activating an item.
@@ -219,6 +276,9 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
         // Run the item's effects
         ExecuteItemEffects(uid, item, proto, out result);
+
+        // Notify the player the item was activated
+        NotifyUser(uid, Loc.GetString("currencystore-item-activated", ("item", Loc.GetString(proto.Name))));
 
         // Decrement item uses if the item is not infinite
         if (item.UsesLeft != -1 && item.UsesLeft != 1)
