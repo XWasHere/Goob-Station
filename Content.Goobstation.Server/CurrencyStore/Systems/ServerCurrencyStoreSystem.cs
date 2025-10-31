@@ -33,18 +33,6 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
     [Dependency] private readonly GameTicker _ticker = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
 
-    /// <summary>
-    ///     Events received from ServerCurrencyStoreManager, safe to interact with from ECS.
-    /// </summary>
-    /// <remarks>
-    ///     Subscribing to manager events is icky, but this works for now.
-    ///
-    ///     NOTE(XWH): I highly doubt this needs a lock, though in the future I would like
-    ///                to async-ify some of the manager code, and I want it to be thread-safe.
-    /// </remarks>
-    private Queue<(bool, NetUserId, object, ItemModificationReason, NetUserId?)> _itemChangesMailbox = [];
-    private readonly object _itemChangesMailboxLock = new();
-
     #region Localization Dictionaries
 
     private readonly Dictionary<ItemModificationReason, string> _eventTypesToLocType = new()
@@ -85,51 +73,6 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         base.Shutdown();
     }
 
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        // Process events from StoreManager
-        while (true)
-        {
-            // This is horrible.
-            (bool, NetUserId, object, ItemModificationReason, NetUserId?) data;
-            lock (_itemChangesMailboxLock)
-                if (!_itemChangesMailbox.TryDequeue(out data))
-                    break;
-            var (added, owner, item, reason, actor) = data;
-
-            // Run ECS-safe event handlers
-            switch (item)
-            {
-                case CurrencyStoreInventoryItem inventoryItem:
-                {
-                    if (added)
-                        ProcessItemAdded(inventoryItem, reason, actor);
-                    else
-                        ProcessItemRemoved(inventoryItem, reason, actor);
-                    break;
-                }
-                case CurrencyStoreVoucher voucher:
-                {
-                    if (added)
-                        ProcessVoucherAdded(voucher, reason, actor);
-                    else
-                        ProcessVoucherRemoved(voucher, reason, actor);
-                    break;
-                }
-                case ProtoId<CurrencyStoreItemPrototype> permanent:
-                {
-                    if (added)
-                        ProcessPermanentItemAdded(owner, permanent, reason, actor);
-                    else
-                        ProcessPermanentItemRemoved(owner, permanent, reason, actor);
-                    break;
-                }
-            }
-        }
-    }
-
     #endregion
 
     #region Public Interface
@@ -153,30 +96,41 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
     #endregion
 
-    #region StoreManager Event Handling
+    #region Event Handling
 
     private void OnManagerItemAdded(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor)
     {
-        lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((true, item.Owner, item, reason, actor));
+        // Get item prototype
+        if (!_proto.TryIndex(item.Prototype, out var proto))
+            return; // If we don't have the prototype, we can't do anything anyways. Just ignore it.
+
+        // Send popup to player
+        DisplayAddedMessage("item", proto.Name, item.Owner, reason, actor);
     }
 
     private void OnManagerItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actor)
     {
-        lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((false, item.Owner, item, reason, actor));
+        // Get prototype
+        if (!_proto.TryIndex(item.Prototype, out var proto))
+            return;
+
+        DisplayRemovedMessage("item", proto.Name, item.Owner, reason, actor);
     }
 
-    private void OnManagerVoucherAdded(CurrencyStoreVoucher item, ItemModificationReason reason, NetUserId? actor)
+    private void OnManagerVoucherAdded(CurrencyStoreVoucher voucher, ItemModificationReason reason, NetUserId? actor)
     {
-        lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((true, item.Owner, item, reason, actor));
+        if (!_proto.TryIndex(voucher.Prototype, out var proto))
+            return;
+
+        DisplayAddedMessage("voucher", proto.Name, voucher.Owner, reason, actor);
     }
 
-    private void OnManagerVoucherRemoved(CurrencyStoreVoucher item, ItemModificationReason reason, NetUserId? actor)
+    private void OnManagerVoucherRemoved(CurrencyStoreVoucher voucher, ItemModificationReason reason, NetUserId? actor)
     {
-        lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((false, item.Owner, item, reason, actor));
+        if (!_proto.TryIndex(voucher.Prototype, out var proto))
+            return;
+
+        DisplayRemovedMessage("voucher", proto.Name, voucher.Owner, reason, actor);
     }
 
     private void OnManagerPermanentItemAdded(NetUserId uid,
@@ -184,8 +138,10 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         ItemModificationReason reason,
         NetUserId? actor)
     {
-        lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((true, uid, item, reason, actor));
+        if (!_proto.TryIndex(item, out var proto))
+            return;
+
+        DisplayAddedMessage("permanent", proto.Name, uid, reason, actor);
     }
 
     private void OnManagerPermanentItemRemoved(NetUserId uid,
@@ -193,68 +149,10 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         ItemModificationReason reason,
         NetUserId? actor)
     {
-        lock (_itemChangesMailboxLock)
-            _itemChangesMailbox.Enqueue((false, uid, item, reason, actor));
-    }
-
-    #endregion
-
-    #region Event Handling
-
-    private void ProcessItemAdded(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actorUid)
-    {
-        // Get item prototype
-        if (!_proto.TryIndex(item.Prototype, out var proto))
-            return; // If we don't have the prototype, we can't do anything anyways. Just ignore it.
-
-        DisplayAddedMessage("item", proto.Name, item.Owner, reason, actorUid);
-    }
-
-    private void ProcessItemRemoved(CurrencyStoreInventoryItem item, ItemModificationReason reason, NetUserId? actorUid)
-    {
-        // Get prototype
-        if (!_proto.TryIndex(item.Prototype, out var proto))
+        if (!_proto.TryIndex(item, out var proto))
             return;
 
-        DisplayRemovedMessage("item", proto.Name, item.Owner, reason, actorUid);
-    }
-
-    private void ProcessVoucherAdded(CurrencyStoreVoucher voucher, ItemModificationReason reason, NetUserId? actorUid)
-    {
-        if (!_proto.TryIndex(voucher.Prototype, out var proto))
-            return;
-
-        DisplayAddedMessage("voucher", proto.Name, voucher.Owner, reason, actorUid);
-    }
-
-    private void ProcessVoucherRemoved(CurrencyStoreVoucher voucher, ItemModificationReason reason, NetUserId? actorUid)
-    {
-        if (!_proto.TryIndex(voucher.Prototype, out var proto))
-            return;
-
-        DisplayRemovedMessage("voucher", proto.Name, voucher.Owner, reason, actorUid);
-    }
-
-    private void ProcessPermanentItemAdded(NetUserId owner,
-        ProtoId<CurrencyStoreItemPrototype> protoId,
-        ItemModificationReason reason,
-        NetUserId? actorUid)
-    {
-        if (!_proto.TryIndex(protoId, out var proto))
-            return;
-
-        DisplayAddedMessage("permanent", proto.Name, owner, reason, actorUid);
-    }
-
-    private void ProcessPermanentItemRemoved(NetUserId owner,
-        ProtoId<CurrencyStoreItemPrototype> protoId,
-        ItemModificationReason reason,
-        NetUserId? actorUid)
-    {
-        if (!_proto.TryIndex(protoId, out var proto))
-            return;
-
-        DisplayRemovedMessage("permanent", proto.Name, owner, reason, actorUid);
+        DisplayRemovedMessage("permanent", proto.Name, uid, reason, actor);
     }
 
     private void DisplayAddedMessage(string locType,
