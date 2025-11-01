@@ -28,7 +28,6 @@ effects and conditions that cannot be predicted are kept in Content.Goobstation.
   - [x] Remove SharedCurrencyStoreManager entirely. The server and client have completely different needs.
 - [ ] Autocomplete for the token and permanentitem commands that filter out permanent items and tokens respectively.
 - [ ] Try to split up items and permanent items (DO: Holy Shit)
-- [x] Kill ServerCurrencyStoreSystem thread safety larp.
 - [ ] Maybe give conditions and effects player sessions instead of NetUserIds? A lot of things will need to get the player entity. It's easier this way.
   - Maybe don't do this, they won't have it when this is modified to use EntityEffects.
 - [ ] Split up CurrencyStoreSystem and CurrencyStoreManager as partial classes.

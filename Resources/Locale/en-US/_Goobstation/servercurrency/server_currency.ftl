@@ -7,6 +7,7 @@
 
 server-currency-name-singular = Goob Coin
 server-currency-name-plural = Goob Coins
+server-currency-name-abbreviation = GC
 
 ## Commands
 

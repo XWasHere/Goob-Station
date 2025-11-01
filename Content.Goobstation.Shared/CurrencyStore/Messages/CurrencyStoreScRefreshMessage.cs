@@ -12,6 +12,11 @@ namespace Content.Goobstation.Shared.CurrencyStore.Messages;
 ///     inventory has been updated. Null fields have not been changed, while populated
 ///     fields should be updated by the client CurrencyStoreManager.
 /// </summary>
+/// <remarks>
+///     Resending every instance of a certain item every refresh certainly isn't
+///     efficient, though because every item is only a handful of bytes, it should
+///     be ok.
+/// </remarks>
 public sealed class CurrencyStoreScRefreshMessage : NetMessage
 {
     public override MsgGroups MsgGroup => MsgGroups.Core;

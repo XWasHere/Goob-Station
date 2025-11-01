@@ -1,0 +1,51 @@
+<DefaultWindow
+    xmlns="https://spacestation14.io"
+    xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+    Title="Server Store"
+    MinSize="800,500">
+    <BoxContainer Orientation="Vertical" VerticalExpand="True">
+        <!-- Tabs & Inventory -->
+        <PanelContainer>
+            <PanelContainer.PanelOverride>
+                <gfx:StyleBoxFlat BackgroundColor="#800000FF"/>
+            </PanelContainer.PanelOverride>
+            <BoxContainer Orientation="Horizontal">
+                <BoxContainer Name="CategoryList" Orientation="Horizontal" HorizontalExpand="True"/>
+                <RichTextLabel Name="PlayerBalance" Text="BALANCE: 100000GC" Margin="0,0,6,0"/>
+                <Button Text="Open Inventory" StyleClasses="OpenBoth"/>
+            </BoxContainer>
+        </PanelContainer>
+
+        <!-- Items -->
+        <PanelContainer StyleClasses="LowDivider" MinHeight="2">
+            <PanelContainer.PanelOverride>
+                <gfx:StyleBoxFlat BackgroundColor="#17FF2AFF"/>
+            </PanelContainer.PanelOverride>
+        </PanelContainer>
+        <PanelContainer VerticalExpand="True" HorizontalExpand="True" Margin="0,4,0,0">
+            <PanelContainer.PanelOverride>
+                <gfx:StyleBoxFlat BackgroundColor="#200000FF"></gfx:StyleBoxFlat>
+            </PanelContainer.PanelOverride>
+            <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
+                <BoxContainer Orientation="Vertical">
+                    <BoxContainer Name="ItemListings" Orientation="Vertical" HorizontalExpand="True"/>
+                    <Label Text="[ END OF CATEGORY LISTINGS ]"
+                           FontColorOverride="#17FF2AFF"
+                           HorizontalAlignment="Center"
+                           Margin="8"/>
+                </BoxContainer>
+            </ScrollContainer>
+        </PanelContainer>
+
+        <!-- Flavor text footer -->
+        <PanelContainer StyleClasses="LowDivider"/>
+        <BoxContainer Orientation="Horizontal" VerticalAlignment="Bottom">
+            <Label Text="Cybersun Employee Benefits Program"
+                   StyleClasses="WindowFooterText"
+                   HorizontalExpand="True"/>
+            <Label Text="This is a test. None of these items will be in the final store"
+                   StyleClasses="WindowFooterText"
+                   HorizontalAlignment="Right"/>
+        </BoxContainer>
+    </BoxContainer>
+</DefaultWindow>

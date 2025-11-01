@@ -11,6 +11,7 @@ namespace Content.Goobstation.Server.CurrencyStore.Effects;
 
 /// <summary>
 ///     Do not use this in real code. It is a joke effect used for debugging.
+///     It does not set reset the preset after the round. It does not block people from voting to change the gamemode.
 /// </summary>
 public sealed partial class CurrencyStoreSetPresetEffect : CurrencyStoreEffect
 {

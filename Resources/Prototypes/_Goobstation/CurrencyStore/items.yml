@@ -2,16 +2,16 @@
 - type: currencyStoreItem
   id: DebugNoOp
   name: currencystore-item-noop-name
-  description: currencystore-item-noop-description
+  description: currencystore-item-noop-desc
   category: Debug
-  price: 0 # it's free..?
+  price: 0
   effects: []
 
 # test effects work properly
 - type: currencyStoreItem
   id: DebugGibstick
   name: currencystore-item-gibstick-name
-  description: currencystore-item-gibstick-description
+  description: currencystore-item-gibstick-desc
   redeemable: inround
   category: Debug
   price: 10000
@@ -28,7 +28,7 @@
 - type: currencyStoreItem
   id: DebugHeavy
   name: currencystore-item-heavy-name
-  description: currencystore-item-heavy-description
+  description: currencystore-item-heavy-desc
   category: Debug
   price: 500
   maxUses: 5
@@ -37,8 +37,8 @@
 # test preround immediate tokens
 - type: currencyStoreItem
   id: DebugBrokenScheduler
-  name: Set Gamemode to The Guide Token
-  description: Why would anybody do this?
+  name: currencystore-item-broken-scheduler-name
+  description: currencystore-item-broken-scheduler-desc
   category: Debug
   price: 30000
   redeemable: preround
@@ -52,7 +52,7 @@
   id: DebugPermanentExample
   permanent: true
   name: currencystore-item-permanent-example-name
-  description: currencystore-item-permanent-example-description
+  description: currencystore-item-permanent-example-desc
   category: Debug
   price: 1000
   effects: []

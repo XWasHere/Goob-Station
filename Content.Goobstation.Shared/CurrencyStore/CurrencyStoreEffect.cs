@@ -7,6 +7,9 @@ namespace Content.Goobstation.Shared.CurrencyStore;
 /// </summary>
 /// <remarks>
 ///     <para>
+///     I have no EntityEffects and I must scream.
+///     </para>
+///     <para>
 ///     When implementing an effect, first check to make sure that there are no
 ///     other effects that already do the same thing as you. If you are making a
 ///     complex effect, it may be helpful to break it into multiple effects so that

@@ -33,4 +33,10 @@ public sealed partial class CurrencyStoreCategoryPrototype : IPrototype
     /// </summary>
     [DataField]
     public bool InStore { get; private set; } = true;
+
+    /// <summary>
+    ///     Lower numbers get listed earlier in the shop.
+    /// </summary>
+    [DataField]
+    public int Priority { get; private set; } = 0;
 }

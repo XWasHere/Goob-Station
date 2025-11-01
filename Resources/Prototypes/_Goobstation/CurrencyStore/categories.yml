@@ -1,5 +1,36 @@
 - type: currencyStoreCategory
+  id: Antagonists
+  name: Antagonists
+  description: "AHELP: Is this guy antag?"
+  priority: 0
+
+- type: currencyStoreCategory
+  id: Cosmetics
+  name: Cosmetics
+  description: Waiter waiter more MRPslop please!!!
+  priority: 1
+
+- type: currencyStoreCategory
+  id: Traits
+  name: Traits
+  description: This won't give you cold lizards.
+  priority: 2
+
+# - type: currencyStoreCategory
+#   id: Lootboxes
+#   name: CASINO
+#   description: Cry about it on r/ss14.
+#   priority: 3
+
+- type: currencyStoreCategory
+  id: Misc
+  name: Misc
+  description: Things that don't fit anywhere else.
+  priority: 4
+
+- type: currencyStoreCategory
   id: Debug
   name: currencystore-category-debug-name
   description: currencystore-category-debug-description
+  priority: 99999
   inStore: false

@@ -23,9 +23,6 @@ namespace Content.Goobstation.Server.CurrencyStore.Systems;
 /// <summary>
 ///     Manages all simulation-side store functionality
 /// </summary>
-/// <remarks>
-///     TODO(XWH): ProcessItemAdded and ProcessItemRemoved need to handle immediate items.
-/// </remarks>
 /// <seealso cref="Managers.ServerCurrencyStoreManager"/>
 public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 {
@@ -55,7 +52,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
     public override void Initialize()
     {
-        // WARNING: These can activate items, if any of this is invoked from async code WE'RE FUCKED!!!!
+        // WARNING: These can activate items, if any of this is fired from async code WE'RE FUCKED!!!!
         // Attach to manager events.
         _manager.ItemAdded += OnManagerItemAdded;
         _manager.ItemRemoved += OnManagerItemRemoved;

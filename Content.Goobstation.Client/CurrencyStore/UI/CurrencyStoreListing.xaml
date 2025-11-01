@@ -1,0 +1,23 @@
+<PanelContainer xmlns="https://spacestation14.io"
+                xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+                Margin="8,4,8,0">
+    <PanelContainer.PanelOverride>
+        <gfx:StyleBoxFlat BackgroundColor="#400000FF"/>
+    </PanelContainer.PanelOverride>
+    <BoxContainer Orientation="Vertical" Margin="4">
+        <BoxContainer Orientation="Horizontal">
+            <PanelContainer>
+                <TextureRect SetSize="48,48"></TextureRect>
+            </PanelContainer>
+            <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+                <BoxContainer Orientation="Horizontal">
+                    <Label Name="ItemName" HorizontalExpand="True"/>
+                    <Button Name="PurchaseDropdown" Visible="False" Text="V" HorizontalAlignment="Right" StyleClasses="OpenBoth"/> <!-- Voucher/Goobcoin dropdown -->
+                    <Button Name="PurchaseButton" HorizontalAlignment="Right" StyleClasses="OpenBoth"/> <!-- If a voucher can be used, that, if goobshit, GC -->
+                </BoxContainer>
+                <BoxContainer Name="ItemTraitList" Orientation="Horizontal"/> <!-- List of traits -->
+            </BoxContainer>
+        </BoxContainer>
+        <RichTextLabel Name="ItemDescription"/>
+    </BoxContainer>
+</PanelContainer>

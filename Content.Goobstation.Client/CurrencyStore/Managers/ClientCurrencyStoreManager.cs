@@ -82,7 +82,8 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     public bool CheckPurchasedPermanentItem(ProtoId<CurrencyStoreItemPrototype> proto)
     {
-        throw new NotImplementedException();
+        // TODO(XWH): Implement me!
+        return false;
     }
 
     public void RequestPurchaseItem(ProtoId<CurrencyStoreItemPrototype> proto)

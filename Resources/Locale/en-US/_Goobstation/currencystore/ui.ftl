@@ -43,3 +43,16 @@ currencystore-error-voucherdisallowed = You cannot redeem this voucher for this 
 
 # it's the same wrap that popupsystem uses
 currencystore-chat-notification-message-wrap = [font size=12][color=#AEABC4]{$message}[/color][/font]
+
+# store eui
+currencystore-ui-open-store = Server Store
+
+# store item trait descriptions
+currencystore-item-trait-uses = { $uses ->
+    [1] Single use
+    *[other] {$uses} uses
+}
+currencystore-item-trait-immediate = Activated on purchase
+currencystore-item-trait-redeemable-inround = Redeemable in-round
+currencystore-item-trait-redeemable-preround = Redeemable pre-round
+currencystore-item-trait-permanent = One-time purchase
