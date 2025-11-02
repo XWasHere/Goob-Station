@@ -1,32 +1,29 @@
-<DefaultWindow
+<controls:FancyWindow
     xmlns="https://spacestation14.io"
     xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls;assembly=Content.Client"
     Title="Server Store"
-    MinSize="800,500">
-    <BoxContainer Orientation="Vertical" VerticalExpand="True">
+    MinSize="800,500"
+    StyleClasses="CurrencyStoreWindow">
+    <BoxContainer Orientation="Vertical" VerticalExpand="True" Margin="8">
         <!-- Tabs & Inventory -->
         <PanelContainer>
             <PanelContainer.PanelOverride>
-                <gfx:StyleBoxFlat BackgroundColor="#800000FF"/>
+                <gfx:StyleBoxFlat BackgroundColor="#202020FF"/>
             </PanelContainer.PanelOverride>
             <BoxContainer Orientation="Horizontal">
-                <BoxContainer Name="CategoryList" Orientation="Horizontal" HorizontalExpand="True"/>
-                <RichTextLabel Name="PlayerBalance" Text="BALANCE: 100000GC" Margin="0,0,6,0"/>
-                <Button Text="Open Inventory" StyleClasses="OpenBoth"/>
+                <BoxContainer Name="CategoryList" StyleClasses="CurrencyStoreTopCategories" Orientation="Horizontal" HorizontalExpand="True"/>
+                <RichTextLabel Name="PlayerBalance" Margin="0,0,6,0"/>
+                <Button Text="Open Inventory" StyleClasses="CurrencyStoreTopButton"/>
             </BoxContainer>
         </PanelContainer>
 
         <!-- Items -->
-        <PanelContainer StyleClasses="LowDivider" MinHeight="2">
+        <PanelContainer VerticalExpand="True" HorizontalExpand="True">
             <PanelContainer.PanelOverride>
-                <gfx:StyleBoxFlat BackgroundColor="#17FF2AFF"/>
+                <gfx:StyleBoxFlat BackgroundColor="#200000FF"/>
             </PanelContainer.PanelOverride>
-        </PanelContainer>
-        <PanelContainer VerticalExpand="True" HorizontalExpand="True" Margin="0,4,0,0">
-            <PanelContainer.PanelOverride>
-                <gfx:StyleBoxFlat BackgroundColor="#200000FF"></gfx:StyleBoxFlat>
-            </PanelContainer.PanelOverride>
-            <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
+            <ScrollContainer VerticalExpand="True" HorizontalExpand="True" Margin="0,4,0,0">
                 <BoxContainer Orientation="Vertical">
                     <BoxContainer Name="ItemListings" Orientation="Vertical" HorizontalExpand="True"/>
                     <Label Text="[ END OF CATEGORY LISTINGS ]"
@@ -48,4 +45,4 @@
                    HorizontalAlignment="Right"/>
         </BoxContainer>
     </BoxContainer>
-</DefaultWindow>
+</controls:FancyWindow>

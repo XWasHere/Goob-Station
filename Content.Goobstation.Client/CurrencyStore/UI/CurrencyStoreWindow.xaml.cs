@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Client.UserInterface.Controls;
 using Content.Goobstation.Client.CurrencyStore.Managers;
 using Content.Goobstation.Common.CCVar;
 using Content.Goobstation.Common.ServerCurrency;
@@ -14,7 +15,7 @@ using Robust.Shared.Prototypes;
 namespace Content.Goobstation.Client.CurrencyStore.UI;
 
 [GenerateTypedNameReferences]
-public sealed partial class CurrencyStoreWindow : DefaultWindow
+public sealed partial class CurrencyStoreWindow : FancyWindow
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IConfigurationManager _config = default!;
@@ -66,7 +67,7 @@ public sealed partial class CurrencyStoreWindow : DefaultWindow
                 Pressed = _currentCategory == category,
                 Group = group,
                 ToggleMode = true,
-                StyleClasses = { "OpenBoth" },
+                StyleClasses = { "CurrencyStoreTopButton" },
             };
 
             button.OnPressed += _ => SwitchCategory(category);

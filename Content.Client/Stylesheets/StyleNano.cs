@@ -2065,6 +2065,56 @@ namespace Content.Client.Stylesheets
                 Element<PanelContainer>()
                     .Class(StyleClassInset)
                     .Prop(PanelContainer.StylePropertyPanel, insetBack),
+
+                // Goobstation Start - Currency Store - It's all hardcoded baby!
+                Element<ContainerButton>().Class("CurrencyStoreTopButton")
+                    .Pseudo(ContainerButton.StylePseudoClassNormal)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#600000FF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Element<ContainerButton>().Class("CurrencyStoreTopButton")
+                    .Pseudo(ContainerButton.StylePseudoClassHover)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#800000FF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Element<ContainerButton>().Class("CurrencyStoreTopButton")
+                    .Pseudo(ContainerButton.StylePseudoClassPressed)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#17802AFF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Element<ContainerButton>().Class("CurrencyStoreTopButton")
+                    .Pseudo(ContainerButton.StylePseudoClassDisabled)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#400000FF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Element<ContainerButton>().Class("CurrencyStoreButton")
+                    .Pseudo(ContainerButton.StylePseudoClassNormal)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#181818FF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Element<ContainerButton>().Class("CurrencyStoreButton")
+                    .Pseudo(ContainerButton.StylePseudoClassHover)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#303030FF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Element<ContainerButton>().Class("CurrencyStoreButton")
+                    .Pseudo(ContainerButton.StylePseudoClassPressed)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#17802AFF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Element<ContainerButton>().Class("CurrencyStoreButton")
+                    .Pseudo(ContainerButton.StylePseudoClassDisabled)
+                    .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#606060FF"))
+                    .Prop(ContainerButton.StylePropertyStyleBox, BaseButtonOpenBoth),
+
+                Child().Parent(Element<FancyWindow>().Class("CurrencyStoreWindow"))
+                    .Child(Element<PanelContainer>())
+                    .Prop(Control.StylePropertyModulateSelf, "#202020FF")
+                    .Prop(PanelContainer.StylePropertyPanel, new StyleBoxFlat
+                    {
+                        BackgroundColor = Color.FromHex("#202020FF"),
+                    }),
+                // Goobstation End - Currency Store
             }).ToList());
         }
     }

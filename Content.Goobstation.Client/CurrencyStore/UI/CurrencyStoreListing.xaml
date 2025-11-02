@@ -12,8 +12,8 @@
             <BoxContainer Orientation="Vertical" HorizontalExpand="True">
                 <BoxContainer Orientation="Horizontal">
                     <Label Name="ItemName" HorizontalExpand="True"/>
-                    <Button Name="PurchaseDropdown" Visible="False" Text="V" HorizontalAlignment="Right" StyleClasses="OpenBoth"/> <!-- Voucher/Goobcoin dropdown -->
-                    <Button Name="PurchaseButton" HorizontalAlignment="Right" StyleClasses="OpenBoth"/> <!-- If a voucher can be used, that, if goobshit, GC -->
+                    <Button Name="PurchaseDropdown" StyleClasses="CurrencyStoreButton" Visible="False" Text="V" HorizontalAlignment="Right"/> <!-- Voucher/Goobcoin dropdown -->
+                    <Button Name="PurchaseButton" StyleClasses="CurrencyStoreButton" HorizontalAlignment="Right"/> <!-- If a voucher can be used, that, if goobshit, GC -->
                 </BoxContainer>
                 <BoxContainer Name="ItemTraitList" Orientation="Horizontal"/> <!-- List of traits -->
             </BoxContainer>
