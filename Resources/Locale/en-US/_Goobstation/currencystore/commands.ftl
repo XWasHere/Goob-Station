@@ -16,5 +16,6 @@ command-description-permanentitem-inv = Get all permanent items in the piped pla
 command-description-currencystore-transfer = Transfers the piped objects to the specified player.
 command-description-currencystore-activate = Activates a token on it's owner.
 command-description-currencystore-redeem = Redeem a voucher for an item and give it to its owner.
+command-description-currencystore-setprice = Set the dynamic price of an item.
 
 command-description-opencurrencystore = Open the currency store UI

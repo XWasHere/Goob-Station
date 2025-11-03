@@ -15,7 +15,10 @@
                     <Button Name="PurchaseDropdown" StyleClasses="CurrencyStoreButton" Visible="False" Text="V" HorizontalAlignment="Right"/> <!-- Voucher/Goobcoin dropdown -->
                     <Button Name="PurchaseButton" StyleClasses="CurrencyStoreButton" HorizontalAlignment="Right"/> <!-- If a voucher can be used, that, if goobshit, GC -->
                 </BoxContainer>
-                <BoxContainer Name="ItemTraitList" Orientation="Horizontal"/> <!-- List of traits -->
+                <BoxContainer Orientation="Horizontal">
+                    <BoxContainer Name="ItemTraitList" Orientation="Horizontal" HorizontalExpand="True"/> <!-- List of traits -->
+                    <Label Name="ItemBasePrice" HorizontalAlignment="Right" Visible="False" Margin="0,0,10,0"/>
+                </BoxContainer>
             </BoxContainer>
         </BoxContainer>
         <RichTextLabel Name="ItemDescription"/>

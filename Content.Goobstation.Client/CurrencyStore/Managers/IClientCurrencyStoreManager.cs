@@ -86,4 +86,15 @@ public interface IClientCurrencyStoreManager
     public void RequestTransferVoucher(CurrencyStoreVoucher voucher, string target);
 
     #endregion
+
+    #region Dynamic Item Data
+
+    /// <summary>
+    ///     Gets the current price of an item
+    /// </summary>
+    /// <param name="proto">The item prototype</param>
+    /// <returns>The current price, or -1 if the prototype is invalid</returns>
+    public int GetItemDynamicPrice(ProtoId<CurrencyStoreItemPrototype> proto);
+
+    #endregion
 }

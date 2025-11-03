@@ -10,8 +10,14 @@ namespace Content.Goobstation.Client.CurrencyStore.Managers;
 public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 {
     [Dependency] private readonly INetManager _net = default!;
+    [Dependency] private readonly IPrototypeManager _proto = default!;
 
     private ISawmill _sawmill = default!;
+
+    /// <summary>
+    ///     Item data sent from the server.
+    /// </summary>
+    private Dictionary<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData> _cachedItemData = new();
 
     #region Lifecycle
 
@@ -48,11 +54,9 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     private void OnRefreshStore(CurrencyStoreScRefreshStoreMessage message)
     {
-        // TODO(XWH): Replace this with real code
-        _sawmill.Debug("got store refresh from server");
         foreach (var record in message.UpdatedItems)
         {
-            _sawmill.Debug($"Added item data [{record.Key}] = {record.Value.Price}");
+            _cachedItemData[record.Key] = record.Value;
         }
     }
 
@@ -114,6 +118,17 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
     public void RequestTransferVoucher(CurrencyStoreVoucher voucher, string target)
     {
         throw new NotImplementedException();
+    }
+
+    public int GetItemDynamicPrice(ProtoId<CurrencyStoreItemPrototype> proto)
+    {
+        if (_cachedItemData.TryGetValue(proto, out var value))
+            return value.Price;
+
+        if (_proto.TryIndex(proto, out var prototype))
+            return prototype.Price;
+
+        return -1;
     }
 
     # endregion

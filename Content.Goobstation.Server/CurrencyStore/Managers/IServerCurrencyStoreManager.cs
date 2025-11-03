@@ -219,6 +219,31 @@ public interface IServerCurrencyStoreManager
     public bool TryTransferVoucher(CurrencyStoreVoucher voucher, NetUserId toUid, out string result);
 
     #endregion
+
+    #region Dynamic Item Data
+
+    /// <summary>
+    ///     Set an item's price
+    /// </summary>
+    /// <param name="proto">The item prototype</param>
+    /// <param name="price">The item's new price</param>
+    public void SetDynamicItemPrice(ProtoId<CurrencyStoreItemPrototype> proto, int price);
+
+    /// <summary>
+    ///     Adjust an item's price
+    /// </summary>
+    /// <param name="id">The item prototype</param>
+    /// <param name="adjustment">The item's new price</param>
+    public void ModifyDynamicItemPrice(ProtoId<CurrencyStoreItemPrototype> id, int adjustment);
+
+    /// <summary>
+    ///     Get an item's price
+    /// </summary>
+    /// <param name="id">The item prototype</param>
+    /// <returns>The item's price, or -1 it the prototype is invalid</returns>
+    public int GetDynamicItemPrice(ProtoId<CurrencyStoreItemPrototype> id);
+
+    #endregion
 }
 
 /// <summary>

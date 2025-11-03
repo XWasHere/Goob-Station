@@ -75,4 +75,12 @@ public sealed class CurrencyStoreCommand : ToolshedCommand
                 ctx.WriteLine($"error redeeming voucher {voucher.Id} for {item}: {result}");
         }
     }
+
+    [CommandImplementation("setprice")]
+    public void SetPrice(IInvocationContext ctx,
+        [CommandArgument] ProtoId<CurrencyStoreItemPrototype> item,
+        [CommandArgument] int price)
+    {
+        _manager.SetDynamicItemPrice(item, price);
+    }
 }

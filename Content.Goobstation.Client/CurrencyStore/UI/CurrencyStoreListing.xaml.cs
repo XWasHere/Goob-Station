@@ -17,10 +17,16 @@ public sealed partial class CurrencyStoreListing : PanelContainer
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IClientCurrencyStoreManager _currencyStore = default!;
 
-    public CurrencyStoreListing()
+    public string Prototype;
+
+    public CurrencyStoreListing(ProtoId<CurrencyStoreItemPrototype> proto)
     {
         RobustXamlLoader.Load(this);
         IoCManager.InjectDependencies(this);
+
+        Prototype = proto;
+
+        PopulatePrototype(proto);
     }
 
     /// <summary>
@@ -31,9 +37,17 @@ public sealed partial class CurrencyStoreListing : PanelContainer
         if (!_proto.TryIndex(protoId, out var proto))
             return;
 
+        var currentPrice = _currencyStore.GetItemDynamicPrice(protoId);
+
         ItemName.Text = Loc.GetString(proto.Name);
         ItemDescription.Text = Loc.GetString(proto.Description);
-        PurchaseButton.Text = $"{proto.Price} {Loc.GetString("server-currency-name-abbreviation")}";
+        PurchaseButton.Text = Loc.GetString("server-currency-name-amount", ("amount", currentPrice));
+        if (currentPrice != proto.Price)
+        {
+            ItemBasePrice.Visible = true;
+            ItemBasePrice.Text = Loc.GetString("currencystore-ui-base-price",
+                ("price", Loc.GetString("server-currency-name-amount", ("amount", proto.Price))));
+        }
 
         ItemTraitList.RemoveAllChildren();
 
@@ -66,5 +80,5 @@ public sealed partial class CurrencyStoreListing : PanelContainer
             text = " | " + text;
 
         ItemTraitList.AddChild(new Label { Text = text });
-}
+    }
 }

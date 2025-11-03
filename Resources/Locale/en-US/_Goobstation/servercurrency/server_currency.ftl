@@ -8,6 +8,7 @@
 server-currency-name-singular = Goob Coin
 server-currency-name-plural = Goob Coins
 server-currency-name-abbreviation = GC
+server-currency-name-amount = {$amount} GC
 
 ## Commands
 

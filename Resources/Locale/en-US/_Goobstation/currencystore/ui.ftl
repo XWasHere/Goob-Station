@@ -46,6 +46,7 @@ currencystore-chat-notification-message-wrap = [font size=12][color=#AEABC4]{$me
 
 # store eui
 currencystore-ui-open-store = Server Store
+currencystore-ui-base-price = Base: {$price}
 
 # store item trait descriptions
 currencystore-item-trait-uses = { $uses ->

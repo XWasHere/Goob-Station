@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Content.Goobstation.Server.CurrencyStore.Managers;
@@ -61,7 +62,7 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         _manager.PermanentItemAdded += OnManagerPermanentItemAdded;
         _manager.PermanentItemRemoved += OnManagerPermanentItemRemoved;
 
-        // Activate items when the round state changes
+        // Activate items when the round state changes / adjust prices after a round
         SubscribeLocalEvent<GameRunLevelChangedEvent>(OnGameRunLevelChanged);
 
         // Handle players who join the round late.
@@ -112,13 +113,27 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
         switch (args.New)
         {
             case GameRunLevel.InRound:
+            {
                 foreach (var player in _player.Sessions.Where(_ticker.UserHasJoinedGame))
                     ActivateImmediateItems(player, CurrencyStoreRoundState.InRound);
+
                 break;
+            }
             case GameRunLevel.PreRoundLobby:
+            {
                 foreach (var player in _player.Sessions.Where(s => s.Status == SessionStatus.InGame))
                     ActivateImmediateItems(player, CurrencyStoreRoundState.PreRound);
+
+                // TODO(XWH):
+                // This technically gets called at server startup as well, but it should be fine. There's way more pressing issues
+                // with the price increase/decrease system anyways, the most notable of which being that when a round on any server
+                // ends, the price will decrease for ALL servers. There's not really anything that can be done about that without
+                // making prices server specific. It's probably going to be best to leave this decision up to admins/maints.
+                foreach (var item in _proto.EnumeratePrototypes<CurrencyStoreItemPrototype>().Where(i => i.PriceDecrease != 0))
+                    _manager.ModifyDynamicItemPrice(item, -item.PriceDecrease);
+
                 break;
+            }
         }
     }
 

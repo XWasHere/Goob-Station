@@ -33,7 +33,7 @@ public sealed partial class CurrencyStoreWindow : FancyWindow
 
         _showHiddenItems = _config.GetCVar(GoobCVars.CurrencyStoreAllowPurchaseHidden);
 
-        PlayerBalance.Text = $"{_currency.GetBalance()} {Loc.GetString("server-currency-name-abbreviation")}";
+        PlayerBalance.Text = Loc.GetString("server-currency-name-amount", ("amount", _currency.GetBalance()));
 
         PopulateStoreCategories();
     }
@@ -58,8 +58,6 @@ public sealed partial class CurrencyStoreWindow : FancyWindow
             if (_currentCategory == string.Empty)
                 PopulateStoreListings(_currentCategory = category);
 
-            // TODO(XWH): Make CurrencyStoreCategoryButton class with category ID.
-            // TODO(XWH): touch stylenano or kill myself | Make this look good with style magic.
             var button = new Button
             {
                 Text = Loc.GetString(category.Name),
@@ -84,10 +82,7 @@ public sealed partial class CurrencyStoreWindow : FancyWindow
                      .Where(i => i.Category == category && (!i.Permanent || !_currencyStore.CheckPurchasedPermanentItem(i)))
                      .OrderBy(i => Loc.GetString(i.Name))) // TODO(XWH): This might run poorly.
         {
-            // TODO(XWH): Pass an ID to this so that we can tell what item it represents for purchasing items.
-            var listing = new CurrencyStoreListing();
-
-            listing.PopulatePrototype(item);
+            var listing = new CurrencyStoreListing(item);
 
             ItemListings.AddChild(listing);
         }

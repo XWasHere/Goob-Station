@@ -51,14 +51,14 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     ///     Do not use these values for purchasing items, they may have been changed
     ///     by other servers.
     /// </remarks>
-    private Dictionary<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData> _cachedItemData = default!;
+    private Dictionary<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData> _cachedItemData = new();
 
     /// <summary>
     ///     Dynamic item data that has been updated.
     /// </summary>
     /// <seealso cref="MarkItemDataUpdated"/>
     /// <seealso cref="SendUpdatedItemData"/>
-    private HashSet<ProtoId<CurrencyStoreItemPrototype>> _updatedItemData = default!;
+    private HashSet<ProtoId<CurrencyStoreItemPrototype>> _updatedItemData = new();
 
     /// <summary>
     ///     Cached player data
@@ -67,7 +67,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     ///     DO NOT USE THIS FOR ACTIVATING ITEMS.
     ///     ALWAYS CHECK THE DATABASE FIRST WHEN ACTIVATING ITEMS.
     /// </remarks>
-    private Dictionary<NetUserId, StorePlayerData> _cachedPlayerData = default!;
+    private Dictionary<NetUserId, StorePlayerData> _cachedPlayerData = new();
 
     private ISawmill _sawmill = default!;
 
@@ -256,6 +256,26 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     public bool TryTransferVoucher(CurrencyStoreVoucher voucher, NetUserId toUid, out string result)
     {
         return TryTransferVoucherInternal(voucher, toUid, out result);
+    }
+
+    public void SetDynamicItemPrice(ProtoId<CurrencyStoreItemPrototype> id, int price)
+    {
+        if (_proto.TryIndex(id, out var proto))
+            SetItemPrice(proto, price);
+    }
+
+    public void ModifyDynamicItemPrice(ProtoId<CurrencyStoreItemPrototype> id, int adjustment)
+    {
+        if (_proto.TryIndex(id, out var proto))
+            ModifyItemPrice(proto, adjustment);
+    }
+
+    public int GetDynamicItemPrice(ProtoId<CurrencyStoreItemPrototype> id)
+    {
+        if (!_proto.TryIndex(id, out var proto))
+            return -1;
+
+        return GetItemPrice(proto);
     }
 
     #endregion
@@ -1098,7 +1118,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     /// <param name="broadcast">Whether to notify clients that the price has been updated</param>
     private void ModifyItemPrice(CurrencyStoreItemPrototype item, int adjustment, bool broadcast = true)
     {
-        SetItemPrice(item, Math.Clamp(GetItemPrice(item, false) + adjustment, item.Price, int.MaxValue), broadcast);
+        SetItemPrice(item, Math.Max(GetItemPrice(item, false) + adjustment, item.Price), broadcast);
     }
 
     /// <summary>
