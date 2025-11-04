@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Threading.Tasks;
+using Content.Goobstation.Common.ServerCurrency;
 using Content.Goobstation.Shared.CurrencyStore;
 using Content.Goobstation.Shared.CurrencyStore.Messages;
 using Content.Goobstation.Shared.CurrencyStore.Prototypes;
@@ -11,8 +13,14 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 {
     [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly ICommonCurrencyManager _currency = default!;
 
     private ISawmill _sawmill = default!;
+
+    /// <summary>
+    ///     Permanent items sent by the server
+    /// </summary>
+    private HashSet<ProtoId<CurrencyStoreItemPrototype>> _cachedPermanentInventory = new();
 
     /// <summary>
     ///     Item data sent from the server.
@@ -45,11 +53,8 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     private void OnRefresh(CurrencyStoreScRefreshMessage message)
     {
-        _sawmill.Debug("got player refresh from server");
-        foreach (var item in message.Inventory ?? [])
-        {
-            _sawmill.Debug($"Got item data [{item.Id} {item.Prototype} {item.UsesLeft} {item.Immediate}]");
-        }
+        if (message.PermanentItems != null)
+            _cachedPermanentInventory = message.PermanentItems.ToHashSet();
     }
 
     private void OnRefreshStore(CurrencyStoreScRefreshStoreMessage message)
@@ -71,7 +76,7 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     public bool CanAfford(ProtoId<CurrencyStoreItemPrototype> item)
     {
-        throw new NotImplementedException();
+        return _currency.CanAfford(null, GetItemDynamicPrice(item), out _);
     }
 
     public bool CanPurchaseItem(ProtoId<CurrencyStoreItemPrototype> item)
@@ -81,13 +86,12 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     public HashSet<ProtoId<CurrencyStoreItemPrototype>> GetPurchasedPermanentItems()
     {
-        throw new NotImplementedException();
+        return _cachedPermanentInventory;
     }
 
     public bool CheckPurchasedPermanentItem(ProtoId<CurrencyStoreItemPrototype> proto)
     {
-        // TODO(XWH): Implement me!
-        return false;
+        return _cachedPermanentInventory.Contains(proto);
     }
 
     public void RequestPurchaseItem(ProtoId<CurrencyStoreItemPrototype> proto)
