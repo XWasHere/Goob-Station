@@ -16,6 +16,15 @@ public interface IClientCurrencyStoreManager
 
     #endregion
 
+    #region Events
+
+    /// <summary>
+    ///     Event raised when an item price update is received from the server.
+    /// </summary>
+    public event Action<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData>? OnItemUpdate;
+
+    #endregion
+
     #region Items
 
     /// <summary>

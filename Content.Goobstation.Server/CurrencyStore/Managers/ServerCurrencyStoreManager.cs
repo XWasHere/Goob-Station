@@ -287,7 +287,7 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         // Get item prototype
         if (!_proto.TryIndex(message.Item, out var prototype, false))
         {
-            NetFailGeneric(message.MsgChannel, _loc.GetString("currencystore-error-invalidprototype"));
+            NetFailGeneric(message.MsgChannel, _loc.GetString("currencystore-error-prototype"));
             return;
         }
 
@@ -548,7 +548,8 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
         }
 
         // Check that the item isn't in a hidden category
-        if (!_proto.TryIndex(proto.Category, out var category, true) || !category.InStore)
+        if (!_proto.TryIndex(proto.Category, out var category) ||
+            !category.InStore && !_cfg.GetCVar(GoobCVars.CurrencyStoreAllowPurchaseHidden))
         {
             result = _loc.GetString("currencystore-error-hidden");
             return -1;

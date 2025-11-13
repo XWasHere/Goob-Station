@@ -9,49 +9,25 @@ using Robust.Shared.Prototypes;
 namespace Content.Goobstation.Client.CurrencyStore.UI;
 
 /// <summary>
-///     Generic item listing for the store and inventory windows
+///     Currency store/inventory listing.
 /// </summary>
 [GenerateTypedNameReferences]
-public sealed partial class CurrencyStoreListing : PanelContainer
+public abstract partial class CurrencyStoreListing : PanelContainer
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IClientCurrencyStoreManager _currencyStore = default!;
-
-    public string Prototype;
-
-    public CurrencyStoreListing(ProtoId<CurrencyStoreItemPrototype> proto)
+    public CurrencyStoreListing()
     {
         RobustXamlLoader.Load(this);
-        IoCManager.InjectDependencies(this);
-
-        Prototype = proto;
-
-        PopulatePrototype(proto);
     }
 
     /// <summary>
-    ///     Apply the data in a prototype to the listing.
+    ///     Shared code between <see cref="CurrencyStoreItemListing"/> and <see cref="CurrencyStoreInventoryItemListing"/>
     /// </summary>
-    public void PopulatePrototype(ProtoId<CurrencyStoreItemPrototype> protoId)
+    protected void ApplyItemPrototype(CurrencyStoreItemPrototype proto)
     {
-        if (!_proto.TryIndex(protoId, out var proto))
-            return;
-
-        var currentPrice = _currencyStore.GetItemDynamicPrice(protoId); // SHITCODE(XWH): The UIController should probably be doing this. Oh well.
+        ClearTraits();
 
         ItemName.Text = Loc.GetString(proto.Name);
         ItemDescription.Text = Loc.GetString(proto.Description);
-        PurchaseButton.Text = Loc.GetString("server-currency-name-amount", ("amount", currentPrice));
-        if (currentPrice != proto.Price)
-        {
-            ItemBasePrice.Visible = true;
-            ItemBasePrice.Text = Loc.GetString("currencystore-ui-base-price",
-                ("price", Loc.GetString("server-currency-name-amount", ("amount", proto.Price))));
-        }
-
-        ItemTraitList.RemoveAllChildren();
-
-        AddTrait(Loc.GetString("currencystore-item-trait-uses", ("uses", proto.MaxUses)));
 
         if (proto.Immediate)
             AddTrait(Loc.GetString("currencystore-item-trait-immediate"));
@@ -74,7 +50,18 @@ public sealed partial class CurrencyStoreListing : PanelContainer
             AddTrait(Loc.GetString("currencystore-item-trait-permanent"));
     }
 
-    private void AddTrait(string text)
+    /// <summary>
+    ///     Clear the trait list
+    /// </summary>
+    protected void ClearTraits()
+    {
+        ItemTraitList.RemoveAllChildren();
+    }
+
+    /// <summary>
+    ///     Add a trait to the trait list
+    /// </summary>
+    protected void AddTrait(string text)
     {
         if (ItemTraitList.ChildCount > 0)
             text = " | " + text;

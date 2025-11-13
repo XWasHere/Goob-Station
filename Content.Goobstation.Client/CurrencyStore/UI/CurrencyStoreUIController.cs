@@ -3,6 +3,7 @@ using Content.Client.Gameplay;
 using Content.Goobstation.Client.CurrencyStore.Managers;
 using Content.Goobstation.Common.CCVar;
 using Content.Goobstation.Common.ServerCurrency;
+using Content.Goobstation.Shared.CurrencyStore;
 using Content.Goobstation.Shared.CurrencyStore.Prototypes;
 using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.Controls;
@@ -27,12 +28,34 @@ public sealed class CurrencyStoreUIController : UIController, IOnStateChanged<Ga
         base.Initialize();
 
         _config.OnValueChanged(GoobCVars.CurrencyStoreAllowPurchaseHidden, val => _showHiddenItems = val, true);
+
+        _currencyStore.OnItemUpdate += OnItemUpdate;
+        _currency.ClientBalanceChange += OnBalanceChange;
+    }
+
+    private void OnItemUpdate(ProtoId<CurrencyStoreItemPrototype> id, CurrencyStoreItemData data)
+    {
+        // Don't bother updating the window if it's closed, it will be
+        // rebuilt when it's reopened
+        if (_window == null || !_window.IsOpen)
+            return;
+
+        _window.UpdateItem(id, data);
+    }
+
+    private void OnBalanceChange()
+    {
+        if (_window == null || !_window.IsOpen)
+            return;
+
+        _window.SetBalance(_currency.GetBalance());
     }
 
     public void OnStateEntered(GameplayState state)
     {
         _window = UIManager.CreateWindow<CurrencyStoreWindow>();
         _window.OnCategoryButtonPressed += OnCategoryButtonPressed;
+        _window.OnPurchaseButtonPressed += OnPurchaseButtonPressed;
     }
 
     public void OnStateExited(GameplayState state)
@@ -42,16 +65,26 @@ public sealed class CurrencyStoreUIController : UIController, IOnStateChanged<Ga
 
         _window.Close();
         _window.OnCategoryButtonPressed -= OnCategoryButtonPressed;
+        _window.OnPurchaseButtonPressed -= OnPurchaseButtonPressed;
         _window = null;
     }
 
-    private void OnCategoryButtonPressed(BaseButton.ButtonEventArgs buttonEventArgs, ProtoId<CurrencyStoreCategoryPrototype> protoId)
+    private void OnCategoryButtonPressed(BaseButton.ButtonEventArgs args, ProtoId<CurrencyStoreCategoryPrototype> proto)
     {
         if (_window == null)
             return;
 
-        _window.CurrentCategory = protoId;
+        _window.CurrentCategory = proto;
         PopulateStoreListings();
+    }
+
+    private void OnPurchaseButtonPressed(BaseButton.ButtonEventArgs args, ProtoId<CurrencyStoreItemPrototype> proto)
+    {
+        if (_window == null)
+            return;
+
+        // No confirmation. Not a check in sight. Just people living in the moment.
+        _currencyStore.RequestPurchaseItem(proto);
     }
 
     public void Open()
@@ -59,9 +92,9 @@ public sealed class CurrencyStoreUIController : UIController, IOnStateChanged<Ga
         if (_window == null || _window.IsOpen)
             return;
 
+        // Reset the window state every time we open it.
         _window.OpenCentered();
         _window.CurrentCategory = string.Empty;
-
         PopulateStore();
         UpdateBalance();
     }

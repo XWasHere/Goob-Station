@@ -15,6 +15,8 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly ICommonCurrencyManager _currency = default!;
 
+    public event Action<ProtoId<CurrencyStoreItemPrototype>, CurrencyStoreItemData>? OnItemUpdate;
+
     private ISawmill _sawmill = default!;
 
     /// <summary>
@@ -34,7 +36,7 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
         // Register network messages
         _net.RegisterNetMessage<CurrencyStoreScRefreshMessage>(OnRefresh);
         _net.RegisterNetMessage<CurrencyStoreScRefreshStoreMessage>(OnRefreshStore);
-        _net.RegisterNetMessage<CurrencyStoreScResultMessage>();
+        _net.RegisterNetMessage<CurrencyStoreScResultMessage>(OnResult);
         _net.RegisterNetMessage<CurrencyStoreCsRequestPurchaseMessage>();
         _net.RegisterNetMessage<CurrencyStoreCsRequestTransferMessage>();
 
@@ -62,6 +64,16 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
         foreach (var record in message.UpdatedItems)
         {
             _cachedItemData[record.Key] = record.Value;
+            OnItemUpdate?.Invoke(record.Key, record.Value);
+        }
+    }
+
+    private void OnResult(CurrencyStoreScResultMessage message)
+    {
+        // TODO(XWH): Show a pretty error or something if it fails.
+        if (message.Outcome <= CurrencyStoreScResultMessage.CurrencyStoreScResultValue.Failure)
+        {
+            _sawmill.Info($"got bad result: {message.Reason}");
         }
     }
 
@@ -96,7 +108,7 @@ public sealed class ClientCurrencyStoreManager : IClientCurrencyStoreManager
 
     public void RequestPurchaseItem(ProtoId<CurrencyStoreItemPrototype> proto)
     {
-        throw new NotImplementedException();
+        _net.ClientSendMessage(new CurrencyStoreCsRequestPurchaseMessage { Item = proto });
     }
 
     public void RequestTransferItem(CurrencyStoreInventoryItem item, string target)
