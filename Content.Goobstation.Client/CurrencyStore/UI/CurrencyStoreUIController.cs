@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Client.Gameplay;
+using Content.Client.Lobby;
 using Content.Goobstation.Client.CurrencyStore.Managers;
 using Content.Goobstation.Common.CCVar;
 using Content.Goobstation.Common.ServerCurrency;
@@ -12,7 +13,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Goobstation.Client.CurrencyStore.UI;
 
-public sealed class CurrencyStoreUIController : UIController, IOnStateChanged<GameplayState>
+public sealed class CurrencyStoreUIController : UIController, IOnStateChanged<GameplayState>, IOnStateChanged<LobbyState>
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IConfigurationManager _config = default!;
@@ -53,12 +54,32 @@ public sealed class CurrencyStoreUIController : UIController, IOnStateChanged<Ga
 
     public void OnStateEntered(GameplayState state)
     {
+        InitWindows();
+    }
+
+    public void OnStateExited(GameplayState state)
+    {
+        ShutdownWindows();
+    }
+
+    public void OnStateEntered(LobbyState state)
+    {
+        InitWindows();
+    }
+
+    public void OnStateExited(LobbyState state)
+    {
+        ShutdownWindows();
+    }
+
+    private void InitWindows()
+    {
         _window = UIManager.CreateWindow<CurrencyStoreWindow>();
         _window.OnCategoryButtonPressed += OnCategoryButtonPressed;
         _window.OnPurchaseButtonPressed += OnPurchaseButtonPressed;
     }
 
-    public void OnStateExited(GameplayState state)
+    private void ShutdownWindows()
     {
         if (_window == null)
             return;
@@ -89,7 +110,7 @@ public sealed class CurrencyStoreUIController : UIController, IOnStateChanged<Ga
 
     public void Open()
     {
-        if (_window == null || _window.IsOpen)
+        if (_window == null)
             return;
 
         // Reset the window state every time we open it.
