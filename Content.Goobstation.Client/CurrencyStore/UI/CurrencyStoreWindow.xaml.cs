@@ -17,70 +17,53 @@ namespace Content.Goobstation.Client.CurrencyStore.UI;
 [GenerateTypedNameReferences]
 public sealed partial class CurrencyStoreWindow : FancyWindow
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IConfigurationManager _config = default!;
-    [Dependency] private readonly ICommonCurrencyManager _currency = default!;
-    [Dependency] private readonly IClientCurrencyStoreManager _currencyStore = default!;
+    public event Action<BaseButton.ButtonEventArgs, ProtoId<CurrencyStoreCategoryPrototype>>? OnCategoryButtonPressed;
 
-    private readonly bool _showHiddenItems;
-
-    private ProtoId<CurrencyStoreCategoryPrototype> _currentCategory = string.Empty;
+    public ProtoId<CurrencyStoreCategoryPrototype> CurrentCategory = string.Empty;
 
     public CurrencyStoreWindow()
     {
         RobustXamlLoader.Load(this);
-        IoCManager.InjectDependencies(this);
-
-        _showHiddenItems = _config.GetCVar(GoobCVars.CurrencyStoreAllowPurchaseHidden);
-
-        PlayerBalance.Text = Loc.GetString("server-currency-name-amount", ("amount", _currency.GetBalance()));
-
-        PopulateStoreCategories();
     }
 
-    /// <summary>
-    ///     Switch to the specified category
-    /// </summary>
-    public void SwitchCategory(ProtoId<CurrencyStoreCategoryPrototype> category)
+    public void SetBalance(int balance)
     {
-        _currentCategory = category;
-
-        PopulateStoreListings(category);
+        PlayerBalance.Text = Loc.GetString("server-currency-name-amount", ("amount", balance));
     }
 
-    private void PopulateStoreCategories()
+    public void PopulateStoreCategories(IEnumerable<CurrencyStoreCategoryPrototype> categories)
     {
+        CategoryList.RemoveAllChildren();
+
         var group = new ButtonGroup();
-        foreach (var category in _proto.EnumeratePrototypes<CurrencyStoreCategoryPrototype>()
-                     .Where(c => c.InStore || _showHiddenItems)
-                     .OrderBy(c => c.Priority))
-        {
-            if (_currentCategory == string.Empty)
-                PopulateStoreListings(_currentCategory = category);
 
-            var button = new Button
+        foreach (var category in categories)
+        {
+            if (CurrentCategory == string.Empty)
+                CurrentCategory = category;
+
+            var button = new CurrencyStoreCategoryButton
             {
                 Text = Loc.GetString(category.Name),
                 ToolTip = Loc.GetString(category.Description),
-                Pressed = _currentCategory == category,
+                Pressed = CurrentCategory == category,
                 Group = group,
                 ToggleMode = true,
                 StyleClasses = { "CurrencyStoreTopButton" },
+                Id = category.ID,
             };
 
-            button.OnPressed += _ => SwitchCategory(category);
+            button.OnPressed += args => OnCategoryButtonPressed?.Invoke(args, button.Id);
 
             CategoryList.AddChild(button);
         }
     }
 
-    private void PopulateStoreListings(ProtoId<CurrencyStoreCategoryPrototype> category)
+    public void PopulateStoreListings(IEnumerable<CurrencyStoreItemPrototype> items)
     {
         ItemListings.RemoveAllChildren();
 
-        foreach (var item in _proto.EnumeratePrototypes<CurrencyStoreItemPrototype>()
-                     .Where(i => i.Category == category && (!i.Permanent || !_currencyStore.CheckPurchasedPermanentItem(i)))
-                     .OrderBy(i => Loc.GetString(i.Name))) // TODO(XWH): This might run poorly.
+        foreach (var item in items)
         {
             var listing = new CurrencyStoreListing(item);
 
@@ -90,6 +73,6 @@ public sealed partial class CurrencyStoreWindow : FancyWindow
 
     private sealed class CurrencyStoreCategoryButton : Button
     {
-        public string Id = string.Empty;
+        public required ProtoId<CurrencyStoreCategoryPrototype> Id;
     }
 }

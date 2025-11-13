@@ -18,4 +18,5 @@ command-description-currencystore-activate = Activates a token on it's owner.
 command-description-currencystore-redeem = Redeem a voucher for an item and give it to its owner.
 command-description-currencystore-setprice = Set the dynamic price of an item.
 
-command-description-opencurrencystore = Open the currency store UI
+command-opencurrencystore-desc = Open the currency store UI
+command-opencurrencystore-help = Usage: {$command}

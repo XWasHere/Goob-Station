@@ -37,7 +37,7 @@ public sealed partial class CurrencyStoreListing : PanelContainer
         if (!_proto.TryIndex(protoId, out var proto))
             return;
 
-        var currentPrice = _currencyStore.GetItemDynamicPrice(protoId);
+        var currentPrice = _currencyStore.GetItemDynamicPrice(protoId); // SHITCODE(XWH): The UIController should probably be doing this. Oh well.
 
         ItemName.Text = Loc.GetString(proto.Name);
         ItemDescription.Text = Loc.GetString(proto.Description);
