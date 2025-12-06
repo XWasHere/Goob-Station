@@ -459,10 +459,8 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
     /// <param name="permanent">Send permanent items</param>
     private void SendUpdatedPlayerData(NetUserId player, bool items, bool vouchers, bool permanent)
     {
-        if (!_player.TryGetSessionById(player, out var session))
-            return;
-
-        if (!_cachedPlayerData.TryGetValue(player, out var cache))
+        if (!_player.TryGetSessionById(player, out var session) ||
+            !_cachedPlayerData.TryGetValue(player, out var cache))
             return;
 
         var message = new CurrencyStoreScRefreshMessage
@@ -670,13 +668,9 @@ public sealed class ServerCurrencyStoreManager : IServerCurrencyStoreManager
 
         // Decrement voucher uses or remove it if it has none left
         if (voucher.UsesLeft > 1)
-        {
             SetPlayerVoucherUses(voucher, voucher.UsesLeft - 1);
-        }
         else
-        {
             RemoveVoucher(voucher, ItemModificationReason.Activation, voucher.Owner);
-        }
 
         result = "";
         return true;

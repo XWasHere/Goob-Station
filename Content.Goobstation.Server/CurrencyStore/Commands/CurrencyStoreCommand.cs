@@ -58,9 +58,7 @@ public sealed class CurrencyStoreCommand : ToolshedCommand
         foreach (var item in items)
         {
             if (!GetSys<ServerCurrencyStoreSystem>().TryActivateItem(item, out var result))
-            {
                 ctx.WriteLine($"Failed to activate item [{item.Id} {item.Prototype}]: {result}");
-            }
         }
     }
 

@@ -24,6 +24,9 @@ namespace Content.Goobstation.Server.CurrencyStore.Systems;
 /// <summary>
 ///     Manages all simulation-side store functionality
 /// </summary>
+/// <remarks>
+///     This is a mountain of heavily nested slop. It needs a complete refactor.
+/// </remarks>
 /// <seealso cref="Managers.ServerCurrencyStoreManager"/>
 public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 {
@@ -294,13 +297,9 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
         // Decrement item uses if the item is not infinite
         if (item.UsesLeft != -1 && item.UsesLeft != 1)
-        {
             _manager.SetItemUses(item, item.UsesLeft - 1);
-        }
         else if (item.UsesLeft == 1) // If the item has one use left, remove it instead
-        {
             _manager.RemoveItem(item, ItemModificationReason.Activation, uid);
-        }
 
         return true;
     }
@@ -384,11 +383,11 @@ public sealed class ServerCurrencyStoreSystem : SharedCurrencyStoreSystem
 
         foreach (var condition in proto.Conditions)
         {
-            if (!condition.EvaluateCondition(uid, EntityManager))
-            {
-                result = Loc.GetString("currencystore-error-condition", ("reason", condition.GetLocalizedDescription()));
-                return false;
-            }
+            if (condition.EvaluateCondition(uid, EntityManager))
+                continue;
+
+            result = Loc.GetString("currencystore-error-condition", ("reason", condition.GetLocalizedDescription()));
+            return false;
         }
 
         return true;
