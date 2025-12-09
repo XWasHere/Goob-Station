@@ -14,10 +14,10 @@ and Effects folders. Predicted conditions are kept in Content.Goobstation.Shared
 effects and conditions that cannot be predicted are kept in Content.Goobstation.Server.
 
 ## Todo before merging
-- [ ] Merge new database migrations into a single really big migration.
+- [x] Merge new database migrations into a single really big migration.
 - [ ] Get item list from admins
 - [ ] Make ServerCurrencyStoreManager block the main thread less
-- [ ] Why the fuck is ServerCurrencyStoreSystem also using NetMessages???
+- [ ] Why is ServerCurrencyStoreSystem also using NetMessages???
     - [ ] Use a RequestActivationMessage and a RequestActivationResponseMessage event
 - [x] Replace hardcoded strings with localized strings
 - [x] Move all item condition and activation code to ServerCurrencyStoreSystem
@@ -28,14 +28,14 @@ effects and conditions that cannot be predicted are kept in Content.Goobstation.
   - [x] Remove SharedCurrencyStoreManager entirely. The server and client have completely different needs.
 - [ ] Autocomplete for the token and permanentitem commands that filter out permanent items and tokens respectively.
 - [ ] Try to split up items and permanent items (DO: Holy Shit)
-- [ ] Maybe give conditions and effects player sessions instead of NetUserIds? A lot of things will need to get the player entity. It's easier this way.
-  - Maybe don't do this, they won't have it when this is modified to use EntityEffects.
-- [ ] Split up CurrencyStoreSystem and CurrencyStoreManager as partial classes.
-- [ ] Explain in this document how to add conditions and effects
-- [ ] Explain in this document how to utilize permanent items in other systems
-- [ ] Explain in this document how to make new categories in YAML
-- [ ] Explain in this document how to make new vouchers in YAML
-- [ ] Explain in this document how to make new items in YAML
+- [ ] Fix slop database code that allocates a massive list for no reason.
+- [ ] Make docs pr that:
+    - [ ] Explains how to add conditions and effects
+    - [ ] Explains how to utilize permanent items in other systems
+    - [ ] Explains how to make new categories in YAML
+    - [ ] Explains how to make new vouchers in YAML
+    - [ ] Explains how to make new items in YAML
+- [ ] Kill OptionalAbstractTypeSerializer with fire.
 
 ## NOTES
 
